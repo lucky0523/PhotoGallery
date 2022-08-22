@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=0" />
+		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+		<title>Huo's Gallery</title>
+		<meta name="referrer" content="never">
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="msapplication-TileColor" content="#1e293b" />
+		<meta name="theme-color" content="#1e293b" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="HandheldFriendly" content="True" />
+		<meta name="MobileOptimized" content="320" />
+		<link rel="icon" href="/static/images/logo.png">
+		<link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon" />
+		<link rel="apple-touch-icon" href="/static/images/logo.png">
+		<meta name="Robots" content="noindex,nofollow,noarchive">
+		<!-- CSS files -->
+		<link href="/static/css/tabler.min.css" rel="stylesheet" />
+		<style type="text/css">
+                    .navbar-dark {
+                        background: #f7f7f7;
+                        color: rgb(247,0,0,1);
+                    }
+
+                    .navbar-dark .navbar-nav .nav-link {
+                        color: rgb(117,117,117);
+                        font-weight: 300;
+                    }
+
+                    .navbar-dark .navbar-nav .nav-link:hover {
+                        color: #da9b58;
+                    }
+
+                    .page-wrapper {
+                        background: #ffffff;
+                    }
+
+			        .tooltip-inner {
+			            text-align: left;
+			        }
+
+			        .fileTree {
+			            width: 240px;
+			            max-height: 200px;
+			            overflow-y: scroll;
+			            overflow-x: hidden;
+			            position: absolute;
+			            display: none;
+			        }
+
+                    .footer {
+                        margin-top: 0;
+                    }
+		</style>
+	</head>
+
+	<body>
+		<div class="page">
+			<aside class="navbar navbar-vertical navbar-expand-lg navbar-dark sticky-top">
+				<div class="container-xl">
+					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-auto-collapse="true"
+							data-bs-target="#navbar-menu">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<h1 class="navbar-brand">
+						<a href="/" style="user-select: none;  display: block; font-weight: 300; font-family: Lato; font-size: 20px;  color: rgb(117, 117, 117); letter-spacing: 0px; ">
+                            Huo's Gallery
+						</a>
+					</h1>
+					<div class="navbar-nav flex-row d-lg-none"></div>
+					<div class="collapse navbar-collapse" id="navbar-menu">
+						<div class="my-2 my-md-0 flex-grow-1 flex-md-grow-0 order-first order-md-last d-lg-none">
+							<div class="input-icon">
+								<span class="input-icon-addon">
+									<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+										 stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<circle cx="10" cy="10" r="7" />
+										<line x1="21" y1="21" x2="15" y2="15" />
+									</svg>
+								</span>
+								<input type="text" value="" class="form-control home_search_word" placeholder="搜索...">
+							</div>
+						</div>
+						<ul class="navbar-nav pt-lg-3">
+							<li class="nav-item">
+                                <a class="nav-link" href="/">
+                                    DSLR</a>
+							</li>
+							<li class="nav-item">
+                                <a class="nav-link" href="/">
+                                    手机</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</aside>
+
+			<div class="page-wrapper">
+				<div id="page_content"></div>
+				<footer class="footer footer-transparent d-print-none">
+					<div class="container-xl">
+						<div class="row text-center align-items-center flex-row-reverse">
+							<div class="col-12 col-lg-auto mt-3 mt-lg-0">
+								<ul class="list-inline list-inline-dots mb-0">
+									<li class="list-inline-item">
+										Copyright &copy; 2022
+										<a href="." class="link-secondary">Huo</a>.
+										All rights reserved.
+									</li>
+									<li class="list-inline-item">
+										0.1
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</footer>
+			</div>
+		</div>
+
+		<script src="/static/js/jquery-3.1.1.min.js"></script>
+		<script src="/static/js/tabler.min.js"></script>
+		<!-- 公共函数 -->
+		<script type="text/javascript">
+			//显示全局加载框
+			    function show_wait_process() {
+			        $("#modal-wait").modal("show");
+			    }
+
+			    //关闭全局加载框
+			    function hide_wait_process() {
+			        $("#modal-wait").modal("hide");
+			    }
+
+			    //显示确认提示框
+			    function show_confirm_modal(title, func) {
+			        $("#system_confirm_message").text(title);
+			        $("#system_confirm_btn").unbind('click');
+			        $("#system_confirm_btn").click(func);
+			        $("#system-confirm-modal").modal("show");
+			    }
+
+			    //隐藏确认提示框
+			    function hide_confirm_modal() {
+			        $("#system-confirm-modal").modal("hide");
+			    }
+
+			    //显示询问提示框
+			    function show_ask_modal(title, func) {
+			        $("#system_ask_message").text(title);
+			        $("#system_ask_btn").unbind('click');
+			        $("#system_ask_btn").click(func);
+			        $("#system-ask-modal").modal("show");
+			    }
+
+			    //隐藏询问提示框
+			    function hide_ask_modal() {
+			        $("#system-ask-modal").modal("hide");
+			    }
+
+			    //显示成功提示
+			    function show_success_modal(title) {
+			        $("#system_success_message").text(title);
+			        $("#system-success-modal").modal("show");
+			    }
+
+			    //显示失败提示
+			    function show_fail_modal(title) {
+			        $("#system_fail_message").text(title);
+			        $("#system-fail-modal").modal("show");
+			    }
+
+			    //隐藏媒体详情
+			    function hide_mediainfo_modal() {
+			        $("#system-media-modal").modal("hide");
+			    }
+
+
+			    //导航点击
+			    function dynamic_load(page) {
+                    if (page !== '') {
+                        nid = page.split("?")[0];
+                        $("#navbar-menu").find("li").removeClass("active");
+                        $("#navbar-menu").find("a").removeClass("active");
+                        $("#navbar-menu").find("a").each(function () {
+                            if ($(this).attr("onclick") == "navmenu('" + page + "')") {
+                                if ($(this).attr("class") == "dropdown-item") {
+                                    $(this).addClass("active");
+                                } else {
+                                    $(this).parent().addClass("active");
+                                }
+                            }
+                        });
+                        $("#navbar-menu").collapse('hide');
+                        show_wait_process();
+                        $(window).unbind('scroll');
+                        page = page.replaceAll(" ", "%20");
+                        $("#page_content").load(page, {}, function (response, status, xhr) {
+                            hide_wait_process();
+                        });
+                    }
+                    else {
+                        console.log('Page is null!')
+                    }
+			    }
+		</script>
+		<script type="text/javascript">
+			    //浏览器兼容
+			    String.prototype.replaceAll = function (s1, s2) {
+			        return this.replace(new RegExp(s1, "gm"), s2)
+			    }
+
+			    //禁止双指放大
+			    document.documentElement.addEventListener('touchstart', function (event) {
+			        if (event.touches.length > 1) {
+			            event.preventDefault();
+			        }
+			    }, false);
+
+			    //禁止双击放大
+			    var lastTouchEnd = 0;
+			    document.documentElement.addEventListener('touchend', function (event) {
+			        var now = Date.now();
+			        if (now - lastTouchEnd <= 300) {
+			            event.preventDefault();
+			        }
+			        lastTouchEnd = now;
+			    }, false);
+		</script>
+	</body>
+
+</html>
