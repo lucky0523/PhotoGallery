@@ -1,8 +1,9 @@
 import logging
 import exifread
+from datetime import datetime
 from django.db import models
 
-from PhotoGallery.common import Static
+from PhotoGallery.common import Static, utils
 
 LOG_TAG = '[PhotoInfo.models]'
 logging.basicConfig(level=Static.LOG_LEVEL, format='%(asctime)s - %(name)s %(levelname)s - %(message)s')
@@ -18,6 +19,7 @@ class PhotoInfo(models.Model):
     length = models.IntegerField(null=True, blank=True)
     latitude = models.CharField(max_length=100, default="", null=True, blank=True)
     longitude = models.CharField(max_length=100, default="", null=True, blank=True)
+    file_format = models.CharField(max_length=10, default="", null=True, blank=True)
 
     def __str__(self):
         return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\n' \
@@ -26,17 +28,24 @@ class PhotoInfo(models.Model):
 
     def resolving(self):
         image_content = open(self.path, 'rb')
-        print(self.path)
-        tags = exifread.process_file(image_content)
+        self.file_format = self.path.split('.')[-1]
 
+        tags = exifread.process_file(image_content)
         raw_time = tags['EXIF DateTimeOriginal'].printable.split(' ')
         raw_time[0] = raw_time[0].replace(':', '-')
         self.shooting_time = ' '.join(raw_time)
-        self.vendor = tags['Image Make']
-        self.device = tags['Image Model']
+        self.vendor = tags['Image Make'].printable
+        self.device = tags['Image Model'].printable
         self.width = int(tags['EXIF ExifImageWidth'].printable)
         self.length = int(tags['EXIF ExifImageLength'].printable)
         self.latitude = tags["GPS GPSLatitude"].printable[1:-1]
         self.longitude = tags["GPS GPSLongitude"].printable[1:-1]
         image_content.close()
-        return tags
+
+        formatted_name = '.'.join(
+            [self.vendor, self.device, self.shooting_time, self.file_format]) \
+            .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
+            .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
+        date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
+        self.path = utils.move_file(self.path, Static.PATH_SORTED_PHOTOS + str(date.year), formatted_name)
+        self.save()
