@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-import time
+import random
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -31,3 +31,30 @@ def resolving(request):
             model.resolving()
 
     return HttpResponse('aaaaa')
+
+
+def query(request):
+    randomly = request.GET.get('random', 0)
+    year = request.GET.get('year', 1)
+    vendor = request.GET.get('vendor', 1)
+    view_list = []
+    if int(randomly)>0:
+        plist = PhotoInfo.objects.all()
+        for p in plist:
+            view_dict = {}
+            view_dict['image'] = p.path[1:]
+            print(p.path)
+            view_list.append(view_dict)
+        random.shuffle(view_list)
+    else:
+        plist = PhotoInfo.objects.filter(shooting_time__year=year)
+        for p in plist:
+            view_dict = {}
+            view_dict['image'] = p.path[1:]
+            print(p.path)
+            view_list.append(view_dict)
+    context = {'PageData': view_list}
+    if request.method == 'POST':
+        return render(request, 'gallery.html', context)
+    else:
+        return render(request, 'gallery.html', context)
