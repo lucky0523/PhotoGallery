@@ -17,11 +17,14 @@ logger = logging.getLogger(LOG_TAG)
 
 def nav(request):
     dlist = []
-    for sub_path in os.scandir(Static.PATH_SORTED_PHOTOS):
-        if os.path.isdir(sub_path):
-            dlist.append(os.path.basename(sub_path))
-    context = {'PhotoDictionary': dlist}
-    return render(request, 'navigation.html', context)
+    if not os.path.exists(Static.PATH_SORTED_RAW_PHOTOS):
+        return render(request, 'navigation.html')
+    else:
+        for sub_path in os.scandir(Static.PATH_SORTED_RAW_PHOTOS):
+            if os.path.isdir(sub_path):
+                dlist.append(os.path.basename(sub_path))
+        context = {'PhotoDictionary': dlist}
+        return render(request, 'navigation.html', context)
 
 
 def resolving(request):
@@ -42,7 +45,7 @@ def query(request):
         plist = PhotoInfo.objects.all()
         for p in plist:
             view_dict = {}
-            view_dict['image'] = p.path[1:]
+            view_dict['image'] = p.thumbnail_path[1:]
             print(p.path)
             view_list.append(view_dict)
         random.shuffle(view_list)
@@ -50,7 +53,7 @@ def query(request):
         plist = PhotoInfo.objects.filter(shooting_time__year=year)
         for p in plist:
             view_dict = {}
-            view_dict['image'] = p.path[1:]
+            view_dict['image'] = p.thumbnail_path[1:]
             print(p.path)
             view_list.append(view_dict)
     context = {'PageData': view_list}

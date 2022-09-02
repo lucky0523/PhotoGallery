@@ -12,6 +12,7 @@ logger = logging.getLogger(LOG_TAG)
 
 class PhotoInfo(models.Model):
     path = models.CharField(max_length=200, default="", null=True, blank=True)
+    thumbnail_path = models.CharField(max_length=200, default="", null=True, blank=True)
     vendor = models.CharField(max_length=100, default="", null=True, blank=True)
     device = models.CharField(max_length=100, default="", null=True, blank=True)
     shooting_time = models.DateTimeField(null=True, blank=True)
@@ -47,5 +48,8 @@ class PhotoInfo(models.Model):
             .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
             .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
         date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
-        self.path = utils.move_file(self.path, Static.PATH_SORTED_PHOTOS + str(date.year), formatted_name)
+        self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/', formatted_name)
+        self.thumbnail_path = utils.make_square_thumbnail(self.path, 240,
+                                                          Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
+                                                          formatted_name)
         self.save()
