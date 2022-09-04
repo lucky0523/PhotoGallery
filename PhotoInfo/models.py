@@ -16,6 +16,10 @@ class PhotoInfo(models.Model):
     vendor = models.CharField(max_length=100, default="", null=True, blank=True)
     device = models.CharField(max_length=100, default="", null=True, blank=True)
     shooting_time = models.DateTimeField(null=True, blank=True)
+    expo_time = models.CharField(max_length=100, default="", null=True, blank=True)
+    iso = models.CharField(max_length=100, default="", null=True, blank=True)
+    f_number = models.FloatField(null=True, blank=True)
+    equivalent_focal_length = models.IntegerField(null=True, blank=True)
     width = models.IntegerField(null=True, blank=True)
     length = models.IntegerField(null=True, blank=True)
     latitude = models.CharField(max_length=100, default="", null=True, blank=True)
@@ -37,6 +41,14 @@ class PhotoInfo(models.Model):
         self.shooting_time = ' '.join(raw_time)
         self.vendor = tags['Image Make'].printable
         self.device = tags['Image Model'].printable
+        self.expo_time = tags['EXIF ExposureTime'].printable
+        self.iso = tags['EXIF ISOSpeedRatings'].printable
+        f_number_strs = tags['EXIF FNumber'].printable.split('/')
+        if f_number_strs.len() > 1:
+            self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
+        else:
+            self.f_number = float(f_number_strs[0])
+        self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
         self.width = int(tags['EXIF ExifImageWidth'].printable)
         self.length = int(tags['EXIF ExifImageLength'].printable)
         self.latitude = tags["GPS GPSLatitude"].printable[1:-1]
@@ -53,3 +65,10 @@ class PhotoInfo(models.Model):
                                                           Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
                                                           formatted_name)
         self.save()
+
+    def read_exif(self):
+        image_content = open(self.path, 'rb')
+        tags = exifread.process_file(image_content)
+        print(tags)
+        print(int(tags['EXIF FocalLengthIn35mmFilm'].printable))
+

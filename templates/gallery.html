@@ -43,8 +43,15 @@
 
         .image_overlay {
             position: absolute;
-            bottom: 30px;
-            left: 30px;
+            width: 100%;
+            bottom: 0px;
+            left: 0px;
+            background: -webkit-linear-gradient(top,transparent,black);
+        }
+
+        .exif_overlay {
+            margin-left: 20px;
+            color:#fff;
         }
 
         .modal-dialog {
@@ -119,9 +126,12 @@
             <img id="dialog_image" src="/dynamic/photos/sorted/raw/2020/Xiaomi.M2007J1SC.20200905175946.jpg">
         </div>
         <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
-        <div class="image_overlay"><h1>mountain1</h1>
-            <p>1/250 sec at ƒ / 8.5, ISO 64<br>
-                13 mm </p>
+        <div class="image_overlay">
+            <br>
+            <h1 class="exif_overlay">mountain1</h1>
+            <div class="exif_overlay" id="dialog_exif"></div>
+            <div class="exif_overlay" id="dialog_focal_length"></div>
+            <br>
         </div>
 
     </div>
@@ -132,6 +142,8 @@
     //显示媒体详情
     function show_mediainfo_modal(item) {
         $("#dialog_image").attr("src", item.image);
+        $("#dialog_exif").text(item.expo+" sec @ F"+item.f_number+",  ISO"+item.iso);
+        $("#dialog_focal_length").text(item.focal_length+"mm");
         $("#system-media-modal").modal("show");
     }
 
@@ -139,5 +151,13 @@
     function hide_mediainfo_modal() {
         $("#system-media-modal").modal("hide");
     }
+
+    $(document).keydown(function (event) {
+        if (event.keyCode == 27) {
+            setTimeout(function () {
+                hide_mediainfo_modal();
+            }, 100)
+        }
+    });
 
 </script>
