@@ -24,5 +24,6 @@ urlpatterns = [
     re_path(r'^$', views.nav),
     path('re/', views.resolving),
     path('query', views.query),
+    path('imgviewer', views.img_viewer),
     re_path('dynamic/(?P<path>.*)', serve, {'document_root': settings.DYNAMIC_ROOT}),
 ]

@@ -7344,9 +7344,10 @@ fieldset:disabled .btn {
 
 .modal-dialog {
     position: relative;
-    width: auto;
-    margin: var(--tblr-modal-margin);
-    pointer-events: none
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    max-width: max-content;
 }
 
 .modal.fade .modal-dialog {

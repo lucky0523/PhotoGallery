@@ -38,7 +38,6 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
     if exif is not None:
         for orientation in ExifTags.TAGS.keys():
             if ExifTags.TAGS[orientation] == 'Orientation':
-                print(orientation)
                 break
         if exif[orientation] == 3:
             img = img.rotate(180, expand=True)
@@ -58,4 +57,5 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
         crop_img = img.crop((int((width - height) / 2), 0, int((width - height) / 2) + height, height))
     crop_img = crop_img.resize((side, side), Image.ANTIALIAS)
     crop_img.save(dstpath + dstname)
+    logger.info("Save thumbnail -> %s" % (dstpath + dstname))
     return dstpath + dstname

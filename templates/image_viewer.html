@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        html, body {
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .imageview {
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            background-color: #0a8d66;
+            display: block;
+        }
+
+        .imageview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* The Close Button */
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .image_overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="imageview">
+    <span class="close">×</span>
+    <img src="/dynamic/photos/sorted/raw/2020/Xiaomi.M2007J1SC.20200905175946.jpg">
+    <div class="image_overlay"><h1>mountain1</h1>
+        <p>1/250 sec at ƒ / 8.5, ISO 64<br>
+            13 mm </p>
+    </div>
+</div>
+</body>
+</html>

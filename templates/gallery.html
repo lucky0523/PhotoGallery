@@ -2,25 +2,56 @@
     {% load static %}
     <link href="{% static 'css/tabler.min.css' %}" rel="stylesheet"/>
     <style>
-        .container {
-            width: 1000px;
+        /* Image Viewer style begin */
+        html, body {
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .imageview {
+            width: 100%;
+            height: 100%;
             margin: 0 auto;
         }
 
-        .item {
-            width: 25%;
-            float: left;
+        .imageview img {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: inline-block;
+            object-fit: contain;
         }
 
-        .item img {
-            width: 100%;
+        /* The Close Button */
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .image_overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
         }
 
         .modal-dialog {
             max-width: max-content;
-            margin-right: 8%;
-            margin-left: 8%;
-        }
+        }/* 一定要放在html文件里，为什么？ */
+
+        /* Image Viewer style end */
 
         div.center {
             text-align: center;
@@ -69,7 +100,7 @@
                 <div class="col-6 col-md-3 col-xl-2">
                     <div class="square">
                         <a href='javascript:show_mediainfo_modal({{ item }})'>
-                            <img src="{{ item.image }}">
+                            <img src="{{ item.thumbnail }}" width="240px">
                         </a>
                     </div>
                 </div>
@@ -80,4 +111,33 @@
 
 </div>
 
+
+<!-- 模态窗口 -->
+<div class="modal modal-blur fade " id="system-media-modal" role="dialog" aria-hidden="true">
+    <div class="modal-dialog ">
+        <div class="imageview">
+            <img id="dialog_image" src="/dynamic/photos/sorted/raw/2020/Xiaomi.M2007J1SC.20200905175946.jpg">
+        </div>
+        <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
+        <div class="image_overlay"><h1>mountain1</h1>
+            <p>1/250 sec at ƒ / 8.5, ISO 64<br>
+                13 mm </p>
+        </div>
+
+    </div>
 </div>
+
+<script type="text/javascript">
+
+    //显示媒体详情
+    function show_mediainfo_modal(item) {
+        $("#dialog_image").attr("src", item.image);
+        $("#system-media-modal").modal("show");
+    }
+
+    //隐藏媒体详情
+    function hide_mediainfo_modal() {
+        $("#system-media-modal").modal("hide");
+    }
+
+</script>

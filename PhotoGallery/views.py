@@ -41,23 +41,24 @@ def query(request):
     year = request.GET.get('year', 1)
     vendor = request.GET.get('vendor', 1)
     view_list = []
-    if int(randomly)>0:
+    if int(randomly) > 0:
         plist = PhotoInfo.objects.all()
-        for p in plist:
-            view_dict = {}
-            view_dict['image'] = p.thumbnail_path[1:]
-            print(p.path)
-            view_list.append(view_dict)
-        random.shuffle(view_list)
     else:
         plist = PhotoInfo.objects.filter(shooting_time__year=year)
-        for p in plist:
-            view_dict = {}
-            view_dict['image'] = p.thumbnail_path[1:]
-            print(p.path)
-            view_list.append(view_dict)
+    for p in plist:
+        view_dict = {}
+        view_dict['image'] = p.path[1:]
+        view_dict['thumbnail'] = p.thumbnail_path[1:]
+        view_list.append(view_dict)
+    if int(randomly) > 0:
+        random.shuffle(view_list)
+
     context = {'PageData': view_list}
     if request.method == 'POST':
         return render(request, 'gallery.html', context)
     else:
         return render(request, 'gallery.html', context)
+
+
+def img_viewer(request):
+    return render(request, 'image_viewer.html')
