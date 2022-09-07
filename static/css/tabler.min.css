@@ -7339,6 +7339,7 @@ fieldset:disabled .btn {
     height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
+    background-color: #000000c0;
     outline: 0
 }
 

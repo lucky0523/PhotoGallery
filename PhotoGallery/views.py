@@ -46,7 +46,7 @@ def query(request):
     else:
         plist = PhotoInfo.objects.filter(shooting_time__year=year)
     for p in plist:
-        # p.read_exif()
+        p.read_exif()
         view_dict = {}
         view_dict['image'] = p.path[1:]
         view_dict['thumbnail'] = p.thumbnail_path[1:]
@@ -54,6 +54,8 @@ def query(request):
         view_dict['f_number'] = p.f_number
         view_dict['expo'] = p.expo_time
         view_dict['focal_length'] = p.equivalent_focal_length
+        view_dict['city'] = p.city
+        view_dict['district'] = p.district
         view_list.append(view_dict)
     if int(randomly) > 0:
         random.shuffle(view_list)

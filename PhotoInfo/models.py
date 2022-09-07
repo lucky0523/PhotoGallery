@@ -22,8 +22,12 @@ class PhotoInfo(models.Model):
     equivalent_focal_length = models.IntegerField(null=True, blank=True)
     width = models.IntegerField(null=True, blank=True)
     length = models.IntegerField(null=True, blank=True)
-    latitude = models.CharField(max_length=100, default="", null=True, blank=True)
-    longitude = models.CharField(max_length=100, default="", null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    altitude = models.FloatField(null=True, blank=True)
+    province = models.CharField(max_length=100, default="", null=True, blank=True)
+    city = models.CharField(max_length=100, default="", null=True, blank=True)
+    district = models.CharField(max_length=100, default="", null=True, blank=True)
     file_format = models.CharField(max_length=10, default="", null=True, blank=True)
 
     def __str__(self):
@@ -44,15 +48,34 @@ class PhotoInfo(models.Model):
         self.expo_time = tags['EXIF ExposureTime'].printable
         self.iso = tags['EXIF ISOSpeedRatings'].printable
         f_number_strs = tags['EXIF FNumber'].printable.split('/')
-        if f_number_strs.len() > 1:
+        if f_number_strs.__len__() > 1:
             self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
         else:
             self.f_number = float(f_number_strs[0])
         self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
         self.width = int(tags['EXIF ExifImageWidth'].printable)
         self.length = int(tags['EXIF ExifImageLength'].printable)
-        self.latitude = tags["GPS GPSLatitude"].printable[1:-1]
-        self.longitude = tags["GPS GPSLongitude"].printable[1:-1]
+        try:
+            latitude_str = tags["GPS GPSLatitude"].printable[1:-1]
+            self.latitude = utils.sexagesimal2decimal(latitude_str)
+        except:
+            pass
+        try:
+            longitude_str = tags["GPS GPSLongitude"].printable[1:-1]
+            self.longitude = utils.sexagesimal2decimal(longitude_str)
+        except:
+            pass
+        print(tags["GPS GPSAltitude"].printable)
+        try:
+            altitude_strs = tags["GPS GPSAltitude"].printable.split('/')
+            if altitude_strs.__len__() > 1:
+                self.altitude = float(altitude_strs[0]) / float(altitude_strs[1])
+            else:
+                self.altitude = float(altitude_strs[0])
+        except:
+            pass
+        if self.latitude is not None and self.longitude is not None:
+            self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
         image_content.close()
 
         formatted_name = '.'.join(
@@ -71,4 +94,4 @@ class PhotoInfo(models.Model):
         tags = exifread.process_file(image_content)
         print(tags)
         print(int(tags['EXIF FocalLengthIn35mmFilm'].printable))
-
+        # print(utils.decode_address_from_gps(self.latitude, self.longitude))

@@ -1,7 +1,8 @@
+import json
 import logging
 import os
 import shutil
-
+import requests
 from PIL import Image, ExifTags
 
 from PhotoGallery.common import Static
@@ -59,3 +60,30 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
     crop_img.save(dstpath + dstname)
     logger.info("Save thumbnail -> %s" % (dstpath + dstname))
     return dstpath + dstname
+
+
+def sexagesimal2decimal(xtitude_str):
+    deg, min, sec = [x.replace(' ', '') for x in str(xtitude_str).split(',')]
+    return float(deg) + ((float(min) + (float(sec.split('/')[0]) / float(sec.split('/')[-1]) / 60)) / 60)
+
+
+def decode_address_from_gps(lat, lng):
+    """
+    使用Geocoding API把经纬度坐标转换为结构化地址。
+    :param GPS:
+    :return:
+    """
+    secret_key = 'zbLsuDDL4CS2U0M4KezOZZbGUY9iWtVf'
+    baidu_map_api = "http://api.map.baidu.com/geocoder/v2/?ak={0}&callback=renderReverse&location={1},{2}s&output=json&pois=0".format(
+        secret_key, lat, lng)
+    response = requests.get(baidu_map_api)
+    content = response.text.replace("renderReverse&&renderReverse(", "")[:-1]
+    baidu_map_address = json.loads(content)
+    formatted_address = baidu_map_address["result"]["formatted_address"]
+    business = baidu_map_address["result"]["business"]
+    province = baidu_map_address["result"]["addressComponent"]["province"]
+    city = baidu_map_address["result"]["addressComponent"]["city"]
+    district = baidu_map_address["result"]["addressComponent"]["district"]
+    location = baidu_map_address["result"]["sematic_description"]
+    logger.info("Decode geo [%.2f, %.2f] -> %s,%s,%s" % (lng, lat, province, city, district))
+    return province, city, district
