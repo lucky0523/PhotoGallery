@@ -56,6 +56,11 @@ def query(request):
         view_dict['focal_length'] = p.equivalent_focal_length
         view_dict['city'] = p.city
         view_dict['district'] = p.district
+        view_dict['time'] = p.shooting_time.strftime("%Y-%m-%d %H:%M:%S")
+        if p.device in Static.DEVICES_DICT:
+            view_dict['device'] = Static.DEVICES_DICT[p.device]
+        else:
+            view_dict['device'] = p.device
         view_list.append(view_dict)
     if int(randomly) > 0:
         random.shuffle(view_list)

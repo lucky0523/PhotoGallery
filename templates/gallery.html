@@ -123,20 +123,22 @@
 
 <!-- 模态窗口 -->
 <div class="modal modal-blur fade " id="system-media-modal" role="dialog" aria-hidden="true">
-    <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
     <div class="modal-dialog ">
         <div class="imageview">
-            <img id="dialog_image" src="/dynamic/photos/sorted/raw/2020/Xiaomi.M2007J1SC.20200905175946.jpg">
+            <img id="dialog_image" src="">
         </div>
         <div class="image_overlay">
             <br>
             <h1 class="exif_overlay" id="dialog_position"></h1>
-            <div class="exif_overlay" id="dialog_exif"></div>
+            <div class="exif_overlay" id="dialog_device"></div>
+            <div class="exif_overlay" id="dialog_time"></div>
+            <div class="exif_overlay" id="dialog_expo"></div>
             <div class="exif_overlay" id="dialog_focal_length"></div>
             <br>
         </div>
 
     </div>
+    <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
 </div>
 
 <script type="text/javascript">
@@ -144,9 +146,16 @@
     //显示媒体详情
     function show_mediainfo_modal(item) {
         $("#dialog_image").attr("src", item.image);
-        $("#dialog_exif").text(item.expo + " sec @ F" + item.f_number + ",  ISO" + item.iso);
-        $("#dialog_focal_length").text(item.focal_length + "mm");
-        $("#dialog_position").text(item.city + ","+item.district);
+        $("#dialog_device").text(item.device);
+        $("#dialog_time").text(item.time);
+        $("#dialog_expo").text(item.expo + " sec @ F" + item.f_number + ",  ISO" + item.iso);
+        if (item.focal_length == 0) {
+            $("#dialog_focal_length").hide()
+        } else {
+            $("#dialog_focal_length").show()
+            $("#dialog_focal_length").text(item.focal_length + "mm");
+        }
+        $("#dialog_position").text(item.city + "," + item.district);
         $("#system-media-modal").modal("show");
     }
 

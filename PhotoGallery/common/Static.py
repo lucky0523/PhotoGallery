@@ -11,3 +11,6 @@ PATH_UNSORTED_PHOTOS = './dynamic/photos/unsorted/'
 PATH_SORTED_RAW_PHOTOS = './dynamic/photos/sorted/raw/'
 PATH_SORTED_THUMBNAIL_PHOTOS = './dynamic/photos/sorted/thumbnail/'
 
+DEVICES_DICT = {
+    'M2007J1SC': 'Mi10 Ultra',
+}
