@@ -63,7 +63,7 @@
 						<ul class="navbar-nav pt-lg-3">
                             {% for item in PhotoDictionary %}
 							<li class="nav-item">
-                                <a class="nav-link"  href="javascript:void(0)" onclick="dynamic_load('query?year={{ item }}')">
+                                <a class="nav-link"  href="javascript:void(0)" onclick="dynamic_load('query_list?year={{ item }}');current_year={{ item }}">
                                     {{ item }}</a>
 							</li>
                             {% endfor %}
@@ -140,6 +140,8 @@
 		</script>
 		<script type="text/javascript">
 			    //浏览器兼容
+                let current_year=-1;
+
 			    String.prototype.replaceAll = function (s1, s2) {
 			        return this.replace(new RegExp(s1, "gm"), s2)
 			    }
@@ -148,7 +150,7 @@
 			    $(document).ready(function () {
 			        //加载页面
 			        //打开第一个页面
-			        dynamic_load('query?random=1')
+			        dynamic_load('query_list?random=1')
 			    });
 
 			    //禁止双指放大

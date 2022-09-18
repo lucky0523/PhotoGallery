@@ -11,6 +11,7 @@ logger = logging.getLogger(LOG_TAG)
 
 
 class PhotoInfo(models.Model):
+    id = models.AutoField(primary_key=True)
     path = models.CharField(max_length=200, default="", null=True, blank=True)
     thumbnail_path = models.CharField(max_length=200, default="", null=True, blank=True)
     vendor = models.CharField(max_length=100, default="", null=True, blank=True)

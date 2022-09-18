@@ -23,9 +23,9 @@
             object-fit: contain;
         }
 
-        /* The Close Button */
+        /* The Button */
         .close {
-            position: absolute;
+            position: fixed;
             top: 15px;
             right: 35px;
             color: #f1f1f1;
@@ -34,8 +34,21 @@
             transition: 0.3s;
         }
 
+        .left, .right {
+            position: absolute;
+            top: 50%;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
         .close:hover,
-        .close:focus {
+        .left:hover,
+        .right:hover,
+        .close:focus,
+        .left:focus,
+        .right:focus {
             color: #bbb;
             text-decoration: none;
             cursor: pointer;
@@ -108,7 +121,7 @@
             {% for item in PageData %}
                 <div class="col-6 col-md-3 col-xl-2">
                     <div class="square">
-                        <a href='javascript:show_mediainfo_modal({{ item }})'>
+                        <a href='javascript:get_image({{ item.id }})'>
                             <img src="{{ item.thumbnail }}" width="240px">
                         </a>
                     </div>
@@ -139,12 +152,50 @@
 
     </div>
     <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
+    <a href="javascript:get_image(prev_id)" class="left" id="prev" style="left: 50px"><</a>
+    <a href="javascript:get_image(next_id)" class="right" id="next" style="right: 50px">></a>
 </div>
 
 <script type="text/javascript">
+    let prev_id = -1;
+    let next_id = -1;
+    let current_id = -1;
+
+    function ajax_get(id, year, handler) {
+        $.ajax({
+            type: "GET",
+            url: "query_image?id=" + id + "&year=" + year,
+            dataType: "json",
+            cache: false,
+            timeout: 0,
+            success: handler,
+            error: function (xhr, textStatus, errorThrown) {
+                //alert("系统响应超时，请稍后重试！");
+            }
+        });
+    }
+
+    function get_image(id) {
+        ajax_get(id, current_year, function (ret) {
+            show_mediainfo_modal(ret);
+            if (ret.next == -1) {
+                $("#next").hide()
+            } else {
+                $("#next").show()
+            }
+            if (ret.prev == -1) {
+                $("#prev").hide()
+            } else {
+                $("#prev").show()
+            }
+        });
+    }
 
     //显示媒体详情
     function show_mediainfo_modal(item) {
+        current_id = item.id;
+        next_id = item.next
+        prev_id = item.prev
         $("#dialog_image").attr("src", item.image);
         $("#dialog_device").text(item.device);
         $("#dialog_time").text(item.time);

@@ -23,7 +23,8 @@ from PhotoGallery import views
 urlpatterns = [
     re_path(r'^$', views.nav),
     path('re/', views.resolving),
-    path('query', views.query),
+    path('query_list', views.query_list),
+    path('query_image', views.query_image),
     path('imgviewer', views.img_viewer),
     re_path('dynamic/(?P<path>.*)', serve, {'document_root': settings.DYNAMIC_ROOT}),
 ]
