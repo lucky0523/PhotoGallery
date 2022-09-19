@@ -9,6 +9,7 @@ API_VERSION = '0.1'
 
 PATH_UNSORTED_PHOTOS = './dynamic/photos/unsorted/'
 PATH_SORTED_RAW_PHOTOS = './dynamic/photos/sorted/raw/'
+PATH_SORTED_SHOW_PHOTOS = './dynamic/photos/sorted/show/'
 PATH_SORTED_THUMBNAIL_PHOTOS = './dynamic/photos/sorted/thumbnail/'
 
 DEVICES_DICT = {

@@ -53,7 +53,7 @@ def query_image(request):
             'next': -1,
             'prev': -1,
             'id': p.id,
-            'image': p.path[1:],
+            'image': p.show_path[1:],
             'thumbnail': p.thumbnail_path[1:],
             'iso': p.iso,
             'f_number': p.f_number,
@@ -87,7 +87,7 @@ def query_list(request):
     for p in plist:
         # p.read_exif()
         view_dict = {'id': p.id,
-                     'image': p.path[1:],
+                     'image': p.show_path[1:],
                      'thumbnail': p.thumbnail_path[1:],
                      'iso': p.iso,
                      'f_number': p.f_number,

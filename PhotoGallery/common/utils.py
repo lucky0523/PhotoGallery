@@ -29,7 +29,7 @@ def move_file(srcfile, dstpath, dstname=''):  # 移动文件函数，dstpath不�
         return dstpath + sname
 
 
-def make_square_thumbnail(src_file, side, dstpath, dstname):
+def open_and_rotate(src_file):
     img = Image.open(src_file)
     try:
         exif = img._getexif()
@@ -46,19 +46,46 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
             img = img.rotate(270, expand=True)
         elif exif[orientation] == 8:
             img = img.rotate(90, expand=True)
+    return img
 
-    width, height = img.size
+
+def make_square_thumbnail(src_file, side, dstpath, dstname):
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
         os.makedirs(dstpath)
+    img = open_and_rotate(src_file)
+    width, height = img.size
     if width < height:
         crop_img = img.crop((0, int((height - width) / 2), width, int((height - width) / 2) + width))
     else:
         crop_img = img.crop((int((width - height) / 2), 0, int((width - height) / 2) + height, height))
+    img.close()
     crop_img = crop_img.resize((side, side), Image.ANTIALIAS)
     crop_img.save(dstpath + dstname)
     logger.info("Save thumbnail -> %s" % (dstpath + dstname))
+    return dstpath + dstname
+
+
+def make_show_image(src_file, max_side, dstpath, dstname):
+    if not dstpath.endswith('/'):
+        dstpath = dstpath + '/'
+    if not os.path.exists(dstpath):
+        os.makedirs(dstpath)
+    img = open_and_rotate(src_file)
+    width, height = img.size
+    if max(max_side, width, height) == max_side:
+        resize_width = width
+        resize_height = height
+    elif width < height:
+        resize_height = max_side
+        resize_width = int(width / (height / max_side))
+    else:
+        resize_width = max_side
+        resize_height = int(height / (width / max_side))
+    crop_img = img.resize((resize_width, resize_height), Image.ANTIALIAS)
+    crop_img.save(dstpath + dstname)
+    logger.info("Save resize image -> %s" % (dstpath + dstname))
     return dstpath + dstname
 
 
