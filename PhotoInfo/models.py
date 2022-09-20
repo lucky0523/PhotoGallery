@@ -69,7 +69,6 @@ class PhotoInfo(models.Model):
                 self.longitude = utils.sexagesimal2decimal(longitude_str)
             except:
                 pass
-            print(tags["GPS GPSAltitude"].printable)
             try:
                 altitude_strs = tags["GPS GPSAltitude"].printable.split('/')
                 if altitude_strs.__len__() > 1:
