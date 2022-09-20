@@ -101,8 +101,8 @@ def query_list(request):
         else:
             view_dict['device'] = p.device
         view_list.append(view_dict)
-    if int(randomly) > 0:
-        random.shuffle(view_list)
+    # if int(randomly) > 0:
+        # random.shuffle(view_list)
 
     context = {'PageData': view_list}
     if request.method == 'POST':
