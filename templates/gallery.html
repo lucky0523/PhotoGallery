@@ -36,11 +36,22 @@
 
         .left, .right {
             position: absolute;
-            top: 50%;
+            top: 70%;
             color: #f1f1f1;
             font-size: 40px;
             font-weight: bold;
             transition: 0.3s;
+        }
+
+        @media (min-width: 992px) {
+            .left, .right {
+                position: absolute;
+                top: 50%;
+                color: #f1f1f1;
+                font-size: 40px;
+                font-weight: bold;
+                transition: 0.3s;
+            }
         }
 
         .close:hover,
@@ -152,8 +163,8 @@
 
     </div>
     <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
-    <a href="javascript:get_image(prev_id)" class="left" id="prev" style="left: 50px"><</a>
-    <a href="javascript:get_image(next_id)" class="right" id="next" style="right: 50px">></a>
+    <a href="javascript:get_image(prev_id)" class="left" id="prev" style="left: 5%"><</a>
+    <a href="javascript:get_image(next_id)" class="right" id="next" style="right: 5%">></a>
 </div>
 
 <script type="text/javascript">
