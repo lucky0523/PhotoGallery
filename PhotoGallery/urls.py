@@ -25,6 +25,7 @@ urlpatterns = [
     path('re/', views.resolving),
     path('query_list', views.query_list),
     path('query_image', views.query_image),
+    path('reset', views.reset),
     path('imgviewer', views.img_viewer),
     re_path('dynamic/photos/sorted/show/(?P<path>.*)', serve, {'document_root': settings.SHOW_IMAGE_ROOT}),
     re_path('dynamic/photos/sorted/thumbnail/(?P<path>.*)', serve, {'document_root': settings.THUMBNAIL_IMAGE_ROOT}),

@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
 
-from PhotoGallery.common import Static
+from PhotoGallery.common import Static, utils
 from PhotoInfo.models import PhotoInfo
 
 LOG_TAG = '[PhotoGallery.views] '
@@ -113,3 +113,13 @@ def query_list(request):
 
 def img_viewer(request):
     return render(request, 'image_viewer.html')
+
+
+def reset(request):
+    plist = PhotoInfo.objects.all()
+    for p in plist:
+        p.delete()
+    utils.clear_dir(Static.PATH_SORTED_SHOW_PHOTOS)
+    utils.clear_dir(Static.PATH_SORTED_THUMBNAIL_PHOTOS)
+    utils.unsort_files(Static.PATH_SORTED_RAW_PHOTOS, Static.PATH_UNSORTED_PHOTOS)
+    return HttpResponse('bbbb')

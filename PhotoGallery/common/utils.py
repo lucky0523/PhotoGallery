@@ -16,7 +16,7 @@ def move_file(srcfile, dstpath, dstname=''):  # 移动文件函数，dstpath不�
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'
     if not os.path.isfile(srcfile):
-        logger.error("%s not exist!" % srcfile)
+        logger.error("%s not exist!" % os.path.abspath(srcfile))
         return None
     else:
         if not os.path.exists(dstpath):
@@ -114,3 +114,24 @@ def decode_address_from_gps(lat, lng):
     location = baidu_map_address["result"]["sematic_description"]
     logger.info("Decode geo [%.2f, %.2f] -> %s,%s,%s" % (lng, lat, province, city, district))
     return province, city, district
+
+
+def clear_dir(dir_path):
+    # os.walk会得到dir_path下各个后代文件夹和其中的文件的三元组列表，顺序自内而外排列，
+    # 如 log下有111文件夹，111下有222文件夹：[('D:\\log\\111\\222', [], ['22.py']), ('D:\\log\\111', ['222'], ['11.py']), ('D:\\log', ['111'], ['00.py'])]
+    for root, dirs, files in os.walk(dir_path, topdown=False):
+        print(root)  # 各级文件夹绝对路径
+        print(dirs)  # root下一级文件夹名称列表，如 ['文件夹1','文件夹2']
+        print(files)  # root下文件名列表，如 ['文件1','文件2']
+        # 第一步：删除文件
+        for f in files:
+            os.remove(os.path.join(root, f))  # 删除文件
+        # 第二步：删除空文件夹
+        for d in dirs:
+            os.rmdir(os.path.join(root, d))  # 删除一个空目录
+
+
+def unsort_files(scr_dir, dst_dir):
+    for root, dirs, files in os.walk(scr_dir, topdown=False):
+        for f in files:
+            move_file(os.path.join(root, f), dst_dir)
