@@ -44,6 +44,7 @@
         }
 
         @media (min-width: 992px) {
+            /* PC大屏模式 */
             .left, .right {
                 position: absolute;
                 top: 50%;
@@ -217,7 +218,7 @@
             $("#dialog_focal_length").show()
             $("#dialog_focal_length").text(item.focal_length + "mm");
         }
-        $("#dialog_position").text(item.city + "," + item.district);
+        $("#dialog_position").text(item.city + " " + item.district);
         $("#system-media-modal").modal("show");
     }
 

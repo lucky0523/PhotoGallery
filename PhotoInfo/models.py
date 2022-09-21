@@ -87,10 +87,10 @@ class PhotoInfo(models.Model):
                 .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
             date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
             self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/', formatted_name)
-            self.thumbnail_path = utils.make_square_thumbnail(self.path, 240,
+            self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
                                                               Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
                                                               formatted_name)
-            self.show_path = utils.make_show_image(self.path, 3000,
+            self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
                                                    Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
                                                    formatted_name)
             self.save()
