@@ -150,7 +150,7 @@
 <div class="modal modal-blur fade " id="system-media-modal" role="dialog" aria-hidden="true">
     <div class="modal-dialog ">
         <div class="imageview">
-            <img id="dialog_image" src="">
+            <img id="dialog_image" src="" onload="img_onload()">
         </div>
         <div class="image_overlay">
             <br>
@@ -167,6 +167,13 @@
     <a href="javascript:get_image(prev_id)" class="left" id="prev" style="left: 5%"><</a>
     <a href="javascript:get_image(next_id)" class="right" id="next" style="right: 5%">></a>
 </div>
+
+<div class="modal" id="loading-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="spinner-border text-primary"></div>
+    </div>
+</div>
+
 
 <script type="text/javascript">
     let prev_id = -1;
@@ -188,6 +195,7 @@
     }
 
     function get_image(id) {
+        show_loading_modal()
         ajax_get(id, current_year, function (ret) {
             show_mediainfo_modal(ret);
             if (ret.next == -1) {
@@ -227,6 +235,14 @@
         $("#system-media-modal").modal("hide");
     }
 
+    function show_loading_modal() {
+        $("#loading-modal").modal("show");
+    }
+
+    function hide_loading_modal() {
+        $("#loading-modal").modal("hide");
+    }
+
     $(document).keydown(function (event) {
         if (event.keyCode == 27) {
             setTimeout(function () {
@@ -234,5 +250,11 @@
             }, 100)
         }
     });
+
+
+    function img_onload() {
+        {#alert("页面已经载入！");#}
+        hide_loading_modal()
+    }
 
 </script>
