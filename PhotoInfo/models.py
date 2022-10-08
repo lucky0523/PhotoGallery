@@ -12,6 +12,7 @@ logger = logging.getLogger(LOG_TAG)
 
 class PhotoInfo(models.Model):
     id = models.AutoField(primary_key=True)
+    order_id = models.IntegerField(null=True, blank=True)
     path = models.CharField(max_length=200, default="", null=True, blank=True)
     thumbnail_path = models.CharField(max_length=200, default="", null=True, blank=True)
     show_path = models.CharField(max_length=200, default="", null=True, blank=True)
@@ -94,6 +95,10 @@ class PhotoInfo(models.Model):
                                                    Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
                                                    formatted_name)
             self.save()
+
+    def set_order(self, order):
+        self.order_id = order
+        self.save()
 
     def read_exif(self):
         image_content = open(self.path, 'rb')

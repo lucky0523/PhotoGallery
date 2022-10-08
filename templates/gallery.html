@@ -133,7 +133,7 @@
             {% for item in PageData %}
                 <div class="col-6 col-md-3 col-xl-2">
                     <div class="square">
-                        <a href='javascript:get_image({{ item.id }})'>
+                        <a href='javascript:get_image({{ item.order }})'>
                             <img src="{{ item.thumbnail }}" width="240px">
                         </a>
                     </div>
@@ -164,8 +164,8 @@
 
     </div>
     <a href="javascript:void(0)" class="close" data-bs-dismiss="modal">x</a>
-    <a href="javascript:get_image(prev_id)" class="left" id="prev" style="left: 5%"><</a>
-    <a href="javascript:get_image(next_id)" class="right" id="next" style="right: 5%">></a>
+    <a href="javascript:get_image(prev_order)" class="left" id="prev" style="left: 5%"><</a>
+    <a href="javascript:get_image(next_order)" class="right" id="next" style="right: 5%">></a>
 </div>
 
 <div class="modal" id="loading-modal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -176,14 +176,14 @@
 
 
 <script type="text/javascript">
-    let prev_id = -1;
-    let next_id = -1;
-    let current_id = -1;
+    let prev_order = -1;
+    let next_order = -1;
+    let current_order = -1;
 
-    function ajax_get(id, year, handler) {
+    function ajax_get(order, year, handler) {
         $.ajax({
             type: "GET",
-            url: "query_image?id=" + id + "&year=" + year,
+            url: "query_image?order=" + order + "&year=" + year,
             dataType: "json",
             cache: false,
             timeout: 0,
@@ -194,9 +194,9 @@
         });
     }
 
-    function get_image(id) {
+    function get_image(order) {
         show_loading_modal()
-        ajax_get(id, current_year, function (ret) {
+        ajax_get(order, current_year, function (ret) {
             show_mediainfo_modal(ret);
             if (ret.next == -1) {
                 $("#next").hide()
@@ -213,9 +213,9 @@
 
     //显示媒体详情
     function show_mediainfo_modal(item) {
-        current_id = item.id;
-        next_id = item.next
-        prev_id = item.prev
+        current_order = item.order;
+        next_order = item.next
+        prev_order = item.prev
         $("#dialog_image").attr("src", item.image);
         $("#dialog_device").text(item.device);
         $("#dialog_time").text(item.time);
