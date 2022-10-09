@@ -1,4 +1,5 @@
 import logging
+import time
 import exifread
 from datetime import datetime
 from django.db import models
@@ -32,6 +33,8 @@ class PhotoInfo(models.Model):
     city = models.CharField(max_length=100, default="", null=True, blank=True)
     district = models.CharField(max_length=100, default="", null=True, blank=True)
     file_format = models.CharField(max_length=10, default="", null=True, blank=True)
+    is_film = models.BooleanField(default=False)
+    film_model = models.CharField(max_length=30, default="", null=True, blank=True)
 
     def __str__(self):
         return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\n' \
@@ -95,6 +98,20 @@ class PhotoInfo(models.Model):
                                                    Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
                                                    formatted_name)
             self.save()
+
+    def resolving_film(self):
+        self.file_format = self.path.split('.')[-1]
+        self.is_film = True
+        self.order_id = int(time.time() * 1000)
+        formatted_name = str(self.order_id)
+        self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS, formatted_name + '.' + self.file_format)
+        self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                                                          Static.PATH_SORTED_THUMBNAIL_PHOTOS + 'films/',
+                                                          formatted_name + '.jpg')
+        self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                               Static.PATH_SORTED_SHOW_PHOTOS + 'films/',
+                                               formatted_name + '.jpg')
+        self.save()
 
     def set_order(self, order):
         self.order_id = order

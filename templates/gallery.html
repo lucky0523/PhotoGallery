@@ -217,16 +217,25 @@
         next_order = item.next
         prev_order = item.prev
         $("#dialog_image").attr("src", item.image);
-        $("#dialog_device").text(item.device);
-        $("#dialog_time").text(item.time);
-        $("#dialog_expo").text(item.expo + " sec @ F" + item.f_number + ",  ISO" + item.iso);
-        if (item.focal_length == 0) {
-            $("#dialog_focal_length").hide()
+        if (item.is_film == 0) {
+            $("#dialog_device").text(item.device);
+            $("#dialog_time").text(item.time);
+            $("#dialog_expo").text(item.expo + " sec @ F" + item.f_number + ",  ISO" + item.iso);
+            if (item.focal_length == 0) {
+                $("#dialog_focal_length").hide()
+            } else {
+                $("#dialog_focal_length").show()
+                $("#dialog_focal_length").text(item.focal_length + "mm");
+            }
+            $("#dialog_position").text(item.city + " " + item.district);
         } else {
-            $("#dialog_focal_length").show()
-            $("#dialog_focal_length").text(item.focal_length + "mm");
+            $("#dialog_device").text("");
+            $("#dialog_time").text("");
+            $("#dialog_expo").text("");
+            $("#dialog_focal_length").text("");
+            $("#dialog_position").text("");
         }
-        $("#dialog_position").text(item.city + " " + item.district);
+
         $("#system-media-modal").modal("show");
     }
 

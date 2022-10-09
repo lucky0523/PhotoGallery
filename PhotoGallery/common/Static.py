@@ -11,6 +11,8 @@ PATH_UNSORTED_PHOTOS = './dynamic/photos/unsorted/'
 PATH_SORTED_RAW_PHOTOS = './dynamic/photos/sorted/raw/'
 PATH_SORTED_SHOW_PHOTOS = './dynamic/photos/sorted/show/'
 PATH_SORTED_THUMBNAIL_PHOTOS = './dynamic/photos/sorted/thumbnail/'
+PATH_UNSORTED_FILMS = './dynamic/photos/unsorted_films/'
+PATH_SORTED_RAW_FILMS = './dynamic/photos/sorted/raw_films/'
 
 SIZE_THUMBNAIL = 500
 SIZE_SHOW_MAX_SIDE = 2400
