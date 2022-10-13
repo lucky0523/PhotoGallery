@@ -85,6 +85,7 @@ def make_show_image(src_file, max_side, dstpath, dstname):
         resize_height = int(height / (width / max_side))
     crop_img = img.resize((resize_width, resize_height), Image.ANTIALIAS)
     crop_img.save(dstpath + dstname, quality=80)
+    img.close()
     logger.info("Save resize image -> %s" % (dstpath + dstname))
     return dstpath + dstname
 

@@ -22,9 +22,17 @@ def nav(request):
     else:
         for sub_path in os.scandir(Static.PATH_SORTED_SHOW_PHOTOS):
             if os.path.isdir(sub_path):
-                dlist.append(os.path.basename(sub_path))
+                if os.path.basename(sub_path).isdigit():
+                    if int(os.path.basename(sub_path)) <= Static.EARLIER_YEAR:
+                        if str(Static.EARLIER_YEAR) not in dlist:
+                            dlist.append(str(Static.EARLIER_YEAR))
+                    else:
+                        dlist.append(os.path.basename(sub_path))
+                else:
+                    dlist.append(os.path.basename(sub_path))
         context = {'PhotoDictionary': dlist}
-        dlist.sort(reverse=False)
+        print(dlist)
+        dlist.sort(reverse=True)
         return render(request, 'navigation.html', context)
 
 
@@ -49,9 +57,13 @@ def resolving(request):
 def query_image(request):
     order_str = request.GET.get('order', -1)
     year_str = request.GET.get('year', -1)
-    if year_str.isdigit() and int(year_str) > 1900:
-        prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
-        nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
+    if year_str.isdigit():
+        if int(year_str) > Static.EARLIER_YEAR:
+            prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
+            nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
+        else:
+            prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__gt=order_str).first()
+            nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__lt=order_str).all().last()
     else:
         prev = PhotoInfo.objects.all().order_by("order_id").filter(order_id__gt=order_str).first()
         nex = PhotoInfo.objects.all().order_by("order_id").filter(order_id__lt=order_str).all().last()
@@ -105,9 +117,11 @@ def query_list(request):
     if int(homepage) > 0:
         plist = PhotoInfo.objects.all().order_by("order_id")
     else:
-        if year == 'films':
+        if year == Static.KEY_FILMS:
             # 胶片
             plist = PhotoInfo.objects.filter(is_film=1).order_by("-id")
+        elif year == str(Static.EARLIER_YEAR):
+            plist = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("-order_id")
         else:
             # 数码
             plist = PhotoInfo.objects.filter(shooting_time__year=year).order_by("-order_id")

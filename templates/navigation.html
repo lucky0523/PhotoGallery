@@ -64,7 +64,12 @@
                             {% for item in PhotoDictionary %}
 							<li class="nav-item">
                                 <a class="nav-link"  href="javascript:void(0)" onclick="dynamic_load('query_list?year={{ item }}');current_year={{ item }}">
-                                    {{ item }}</a>
+                                    {% if item == "2019" %}
+                                       ealier
+                                    {% else %}
+                                       {{ item }}
+                                    {% endif %}
+                                    </a>
 							</li>
                             {% endfor %}
 						</ul>

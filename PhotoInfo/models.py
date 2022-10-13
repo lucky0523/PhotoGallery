@@ -46,6 +46,7 @@ class PhotoInfo(models.Model):
         self.file_format = self.path.split('.')[-1]
         print(self.path)
         tags = exifread.process_file(image_content)
+        print(tags)
         image_content.close()
         if 'EXIF DateTimeOriginal' in tags:
             raw_time = tags['EXIF DateTimeOriginal'].printable.split(' ')
@@ -60,9 +61,13 @@ class PhotoInfo(models.Model):
                 self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
             else:
                 self.f_number = float(f_number_strs[0])
-            self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
-            self.width = int(tags['EXIF ExifImageWidth'].printable)
-            self.length = int(tags['EXIF ExifImageLength'].printable)
+            if 'EXIF FocalLengthIn35mmFilm' in tags:
+                self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
+            elif 'EXIF FocalLength' in tags:
+                self.equivalent_focal_length = int(tags['EXIF FocalLength'].printable)
+            if 'EXIF ExifImageWidth' in tags and 'EXIF ExifImageLength' in tags:
+                self.width = int(tags['EXIF ExifImageWidth'].printable)
+                self.length = int(tags['EXIF ExifImageLength'].printable)
             try:
                 latitude_str = tags["GPS GPSLatitude"].printable[1:-1]
                 self.latitude = utils.sexagesimal2decimal(latitude_str)
@@ -83,7 +88,6 @@ class PhotoInfo(models.Model):
                 pass
             if self.latitude is not None and self.longitude is not None:
                 self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
-            image_content.close()
 
             formatted_name = '.'.join(
                 [self.vendor, self.device, self.shooting_time, self.file_format]) \
@@ -106,10 +110,10 @@ class PhotoInfo(models.Model):
         formatted_name = str(self.order_id)
         self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS, formatted_name + '.' + self.file_format)
         self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                          Static.PATH_SORTED_THUMBNAIL_PHOTOS + 'films/',
+                                                          Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
                                                           formatted_name + '.jpg')
         self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                               Static.PATH_SORTED_SHOW_PHOTOS + 'films/',
+                                               Static.PATH_SORTED_SHOW_PHOTOS + Static.KEY_FILMS + '/',
                                                formatted_name + '.jpg')
         self.save()
 

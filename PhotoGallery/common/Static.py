@@ -17,6 +17,11 @@ PATH_SORTED_RAW_FILMS = './dynamic/photos/sorted/raw_films/'
 SIZE_THUMBNAIL = 500
 SIZE_SHOW_MAX_SIDE = 2400
 
+KEY_FILMS = 'films'
+EARLIER_YEAR = 2019
+
 DEVICES_DICT = {
     'M2007J1SC': 'Mi10 Ultra',
+    'SM-G9650': 'Samsung S9',
+    'FC220': 'Dji Mavic Pro',
 }
