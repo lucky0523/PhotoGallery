@@ -52,10 +52,14 @@
 <body>
 <div class="imageview">
     <span class="close">×</span>
-    <img src="/dynamic/photos/sorted/raw/2020/Xiaomi.M2007J1SC.20200905175946.jpg">
-    <div class="image_overlay"><h1>mountain1</h1>
-        <p>1/250 sec at ƒ / 8.5, ISO 64<br>
-            13 mm </p>
+    <img src="{{ item.image }}">
+    <div class="image_overlay">
+        <form action="/edit_photo" method='POST'>
+            ID:<input type="text" name="id" value="{{ item.id }}" readonly="true"><br>
+            胶卷名:
+            <input type="text" name="file_model" value="{{ item.file_model }}">
+            <input type="submit" value="Submit">
+        </form>
     </div>
 </div>
 </body>

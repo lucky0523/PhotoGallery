@@ -57,56 +57,38 @@ def resolving(request):
 def query_image(request):
     order_str = request.GET.get('order', -1)
     year_str = request.GET.get('year', -1)
-    if year_str.isdigit():
-        if int(year_str) > Static.EARLIER_YEAR:
-            prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
-            nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
-        else:
-            prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__gt=order_str).first()
-            nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__lt=order_str).all().last()
-    else:
-        prev = PhotoInfo.objects.all().order_by("order_id").filter(order_id__gt=order_str).first()
-        nex = PhotoInfo.objects.all().order_by("order_id").filter(order_id__lt=order_str).all().last()
-    curr = PhotoInfo.objects.all().filter(order_id=order_str).first()
-    p = curr
-    if p is not None:
-        if p.is_film:
-            view_dict = {
-                'code': 200,
-                'next': -1,
-                'prev': -1,
-                'order': p.order_id,
-                'is_film': p.is_film,
-                'image': p.show_path[1:],
-                'thumbnail': p.thumbnail_path[1:],
-                'iso': p.iso}
-        else:
-            view_dict = {
-                'code': 200,
-                'next': -1,
-                'prev': -1,
-                'order': p.order_id,
-                'is_film': p.is_film,
-                'image': p.show_path[1:],
-                'thumbnail': p.thumbnail_path[1:],
-                'iso': p.iso,
-                'f_number': p.f_number,
-                'expo': p.expo_time,
-                'focal_length': p.equivalent_focal_length,
-                'city': p.city,
-                'district': p.district,
-                'time': p.shooting_time.strftime("%Y-%m-%d %H:%M:%S")}
-        if p.device in Static.DEVICES_DICT:
-            view_dict['device'] = Static.DEVICES_DICT[p.device]
-        else:
-            view_dict['device'] = p.device
-        if nex is not None:
-            view_dict['next'] = nex.order_id
-        if prev is not None:
-            view_dict['prev'] = prev.order_id
-        print(view_dict)
-    else:
+    p = PhotoInfo.objects.all().filter(order_id=order_str).first()
+    if p is None:
         view_dict = {'code': 404, 'status': 'Not found!'}
+        return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
+    if p.is_film:
+        prev = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__gt=order_str).first()
+        nex = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__lt=order_str).all().last()
+    else:
+        if year_str.isdigit():
+            if int(year_str) > Static.EARLIER_YEAR:
+                prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
+                nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
+            else:
+                prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__gt=order_str).first()
+                nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__lt=order_str).all().last()
+        else:
+            view_dict = {'code': 404, 'status': 'Year error'}
+            return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
+
+    view_dict = utils.photo_to_dict(p)
+    view_dict['code'] = 200
+    view_dict['next'] = -1
+    view_dict['prev'] = -1
+    if p.device in Static.DEVICES_DICT:
+        view_dict['device'] = Static.DEVICES_DICT[p.device]
+    else:
+        view_dict['device'] = p.device
+    if nex is not None:
+        view_dict['next'] = nex.order_id
+    if prev is not None:
+        view_dict['prev'] = prev.order_id
+    print(view_dict)
     return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
@@ -127,24 +109,7 @@ def query_list(request):
             plist = PhotoInfo.objects.filter(shooting_time__year=year).order_by("-order_id")
     for p in plist:
         # p.read_exif()
-        if p.is_film:
-            view_dict = {'order': p.order_id,
-                         'image': p.show_path[1:],
-                         'thumbnail': p.thumbnail_path[1:],
-                         'is_film': p.is_film,
-                         'file_model': p.film_model}
-        else:
-            view_dict = {'order': p.order_id,
-                         'image': p.show_path[1:],
-                         'thumbnail': p.thumbnail_path[1:],
-                         'is_film': p.is_film,
-                         'iso': p.iso,
-                         'f_number': p.f_number,
-                         'expo': p.expo_time,
-                         'focal_length': p.equivalent_focal_length,
-                         'city': p.city,
-                         'district': p.district,
-                         'time': p.shooting_time.strftime("%Y-%m-%d %H:%M:%S")}
+        view_dict = utils.photo_to_dict(p)
         if p.device in Static.DEVICES_DICT:
             view_dict['device'] = Static.DEVICES_DICT[p.device]
         else:
@@ -162,6 +127,40 @@ def query_list(request):
 
 def img_viewer(request):
     return render(request, 'image_viewer.html')
+
+
+def editor(request):
+    id_str = request.GET.get('id', -1)
+    photo = PhotoInfo.objects.filter(id=id_str).first()
+    view_dict = utils.photo_to_dict(photo)
+    context = {'item': view_dict}
+    return render(request, 'image_viewer.html', context)
+
+
+def edit_photo(request):
+    id_str = request.POST.get('id', -1)
+    body = request.body
+    file_model = request.POST.get('file_model', -1)
+    p = PhotoInfo.objects.filter(id=id_str).first()
+    view_dict = {'code': 404, 'status': 'Not found!'}
+    if p is not None:
+        if file_model != -1:
+            logger.info("Edit No.%s: %s" % (id_str, body.decode()))
+            view_dict = {'code': 200}
+            p.set_file_model(file_model)
+    return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
+
+
+def get_all_films(request):
+    plist = PhotoInfo.objects.filter(is_film=1)
+    l = []
+    for p in plist:
+        f = {
+            'id': p.id,
+            'film_model': p.film_model
+        }
+        l.append(f)
+    return HttpResponse(json.dumps(l, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
 def reset(request):

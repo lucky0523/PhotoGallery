@@ -12,6 +12,30 @@ logging.basicConfig(level=Static.LOG_LEVEL, format='%(asctime)s - %(name)s %(lev
 logger = logging.getLogger(LOG_TAG)
 
 
+def photo_to_dict(photo):
+    if photo.is_film:
+        view_dict = {'id': photo.id,
+                     'order': photo.order_id,
+                     'image': photo.show_path[1:],
+                     'thumbnail': photo.thumbnail_path[1:],
+                     'is_film': photo.is_film,
+                     'file_model': photo.film_model}
+    else:
+        view_dict = {'id': photo.id,
+                     'order': photo.order_id,
+                     'image': photo.show_path[1:],
+                     'thumbnail': photo.thumbnail_path[1:],
+                     'is_film': photo.is_film,
+                     'iso': photo.iso,
+                     'f_number': photo.f_number,
+                     'expo': photo.expo_time,
+                     'focal_length': photo.equivalent_focal_length,
+                     'city': photo.city,
+                     'district': photo.district,
+                     'time': photo.shooting_time.strftime("%Y-%m-%d %H:%M:%S")}
+    return view_dict
+
+
 def move_file(srcfile, dstpath, dstname=''):  # 移动文件函数，dstpath不可以加文件名
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'

@@ -121,6 +121,10 @@ class PhotoInfo(models.Model):
         self.order_id = order
         self.save()
 
+    def set_file_model(self, model):
+        self.film_model = model
+        self.save()
+
     def read_exif(self):
         image_content = open(self.path, 'rb')
         tags = exifread.process_file(image_content)
