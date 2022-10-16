@@ -91,7 +91,7 @@ def query_image(request):
         view_dict['next'] = nex.order_id
     if prev is not None:
         view_dict['prev'] = prev.order_id
-    logger.info('Query one image: '+str(view_dict))
+    logger.info('Query one image: ' + str(view_dict))
     return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
@@ -175,3 +175,7 @@ def reset(request):
     utils.unsort_files(Static.PATH_SORTED_RAW_PHOTOS, Static.PATH_UNSORTED_PHOTOS)
     utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UNSORTED_FILMS)
     return HttpResponse('bbbb')
+
+
+def wx_verify(request):
+    return HttpResponse('15496962470248715457')

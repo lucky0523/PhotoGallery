@@ -30,6 +30,7 @@ urlpatterns = [
     path('editor', views.editor),
     path('edit_photo', views.edit_photo),
     path('get_all_films', views.get_all_films),
+    path('tencent9176013635572033544.txt/', views.wx_verify),
     re_path('dynamic/photos/sorted/show/(?P<path>.*)', serve, {'document_root': settings.SHOW_IMAGE_ROOT}),
     re_path('dynamic/photos/sorted/thumbnail/(?P<path>.*)', serve, {'document_root': settings.THUMBNAIL_IMAGE_ROOT}),
 ]
