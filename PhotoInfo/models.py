@@ -44,9 +44,8 @@ class PhotoInfo(models.Model):
     def resolving(self):
         image_content = open(self.path, 'rb')
         self.file_format = self.path.split('.')[-1]
-        print(self.path)
+        logger.info('Handle image: '+self.path)
         tags = exifread.process_file(image_content)
-        print(tags)
         image_content.close()
         if 'EXIF DateTimeOriginal' in tags:
             raw_time = tags['EXIF DateTimeOriginal'].printable.split(' ')

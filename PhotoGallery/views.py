@@ -22,7 +22,7 @@ def nav(request):
     else:
         for sub_path in os.scandir(Static.PATH_SORTED_SHOW_PHOTOS):
             if os.path.isdir(sub_path):
-                if os.path.basename(sub_path).isdigit():
+                if utils.is_number(os.path.basename(sub_path)):
                     if int(os.path.basename(sub_path)) <= Static.EARLIER_YEAR:
                         if str(Static.EARLIER_YEAR) not in dlist:
                             dlist.append(str(Static.EARLIER_YEAR))
@@ -62,16 +62,19 @@ def query_image(request):
         view_dict = {'code': 404, 'status': 'Not found!'}
         return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
     if p.is_film:
-        prev = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__gt=order_str).first()
-        nex = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__lt=order_str).all().last()
+        nex = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__gt=order_str).first()
+        prev = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__lt=order_str).all().last()
     else:
-        if year_str.isdigit():
-            if int(year_str) > Static.EARLIER_YEAR:
-                prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
-                nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
+        if utils.is_number(year_str):
+            if int(year_str) == -1:
+                nex = PhotoInfo.objects.all().order_by("order_id").filter(order_id__gt=order_str).first()
+                prev = PhotoInfo.objects.all().order_by("order_id").filter(order_id__lt=order_str).all().last()
+            elif int(year_str) > Static.EARLIER_YEAR:
+                nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
+                prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
             else:
-                prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__gt=order_str).first()
-                nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__lt=order_str).all().last()
+                nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__gt=order_str).first()
+                prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__lt=order_str).all().last()
         else:
             view_dict = {'code': 404, 'status': 'Year error'}
             return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
@@ -88,7 +91,7 @@ def query_image(request):
         view_dict['next'] = nex.order_id
     if prev is not None:
         view_dict['prev'] = prev.order_id
-    print(view_dict)
+    logger.info('Query one image: '+str(view_dict))
     return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
@@ -101,12 +104,12 @@ def query_list(request):
     else:
         if year == Static.KEY_FILMS:
             # 胶片
-            plist = PhotoInfo.objects.filter(is_film=1).order_by("-id")
+            plist = PhotoInfo.objects.filter(is_film=1).order_by("order_id")
         elif year == str(Static.EARLIER_YEAR):
-            plist = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("-order_id")
+            plist = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id")
         else:
             # 数码
-            plist = PhotoInfo.objects.filter(shooting_time__year=year).order_by("-order_id")
+            plist = PhotoInfo.objects.filter(shooting_time__year=year).order_by("order_id")
     for p in plist:
         # p.read_exif()
         view_dict = utils.photo_to_dict(p)
