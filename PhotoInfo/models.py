@@ -44,7 +44,7 @@ class PhotoInfo(models.Model):
     def resolving(self):
         image_content = open(self.path, 'rb')
         self.file_format = self.path.split('.')[-1]
-        logger.info('Handle image: '+self.path)
+        logger.info('Handle image: ' + self.path)
         tags = exifread.process_file(image_content)
         image_content.close()
         if 'EXIF DateTimeOriginal' in tags:
@@ -53,13 +53,22 @@ class PhotoInfo(models.Model):
             self.shooting_time = ' '.join(raw_time)
             self.vendor = tags['Image Make'].printable
             self.device = tags['Image Model'].printable
-            self.expo_time = tags['EXIF ExposureTime'].printable
-            self.iso = tags['EXIF ISOSpeedRatings'].printable
-            f_number_strs = tags['EXIF FNumber'].printable.split('/')
-            if f_number_strs.__len__() > 1:
-                self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
+            if 'EXIF ExposureTime' in tags:
+                self.expo_time = tags['EXIF ExposureTime'].printable
             else:
-                self.f_number = float(f_number_strs[0])
+                self.expo_time = -1
+            if 'EXIF ISOSpeedRatings' in tags:
+                self.iso = tags['EXIF ISOSpeedRatings'].printable
+            else:
+                self.iso = -1
+            if 'EXIF FNumber' in tags:
+                f_number_strs = tags['EXIF FNumber'].printable.split('/')
+                if f_number_strs.__len__() > 1:
+                    self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
+                else:
+                    self.f_number = float(f_number_strs[0])
+            else:
+                self.f_number = -1
             if 'EXIF FocalLengthIn35mmFilm' in tags:
                 self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
             elif 'EXIF FocalLength' in tags:

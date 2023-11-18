@@ -101,7 +101,7 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
     else:
         crop_img = img.crop((int((width - height) / 2), 0, int((width - height) / 2) + height, height))
     img.close()
-    crop_img = crop_img.resize((side, side), Image.ANTIALIAS)
+    crop_img = crop_img.resize((side, side), Image.LANCZOS)
     crop_img.save(dstpath + dstname, quality=80)
     logger.info("Save thumbnail -> %s" % (dstpath + dstname))
     return dstpath + dstname
@@ -123,7 +123,7 @@ def make_show_image(src_file, max_side, dstpath, dstname):
     else:
         resize_width = max_side
         resize_height = int(height / (width / max_side))
-    crop_img = img.resize((resize_width, resize_height), Image.ANTIALIAS)
+    crop_img = img.resize((resize_width, resize_height), Image.LANCZOS)
     crop_img.save(dstpath + dstname, quality=80)
     img.close()
     logger.info("Save resize image -> %s" % (dstpath + dstname))
