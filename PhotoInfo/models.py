@@ -14,9 +14,9 @@ logger = logging.getLogger(LOG_TAG)
 class PhotoInfo(models.Model):
     id = models.AutoField(primary_key=True)
     order_id = models.IntegerField(null=True, blank=True)
-    path = models.CharField(max_length=200, default="", null=True, blank=True)
-    thumbnail_path = models.CharField(max_length=200, default="", null=True, blank=True)
-    show_path = models.CharField(max_length=200, default="", null=True, blank=True)
+    path = models.TextField(default="", null=True, blank=True)
+    thumbnail_path = models.TextField(default="", null=True, blank=True)
+    show_path = models.TextField(default="", null=True, blank=True)
     vendor = models.CharField(max_length=100, default="", null=True, blank=True)
     device = models.CharField(max_length=100, default="", null=True, blank=True)
     shooting_time = models.DateTimeField(null=True, blank=True)
@@ -35,13 +35,14 @@ class PhotoInfo(models.Model):
     file_format = models.CharField(max_length=10, default="", null=True, blank=True)
     is_film = models.BooleanField(default=False)
     film_model = models.CharField(max_length=30, default="", null=True, blank=True)
+    formatted_name = models.CharField(max_length=200, default="", null=True, blank=True)
 
     def __str__(self):
         return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\n' \
             .format(self.vendor,
                     self.device)
 
-    def resolving(self):
+    def resolving(self, need_to_save_to_db=True):
         image_content = open(self.path, 'rb')
         self.file_format = self.path.split('.')[-1]
         logger.info('Handle image: ' + self.path)
@@ -97,33 +98,37 @@ class PhotoInfo(models.Model):
             if self.latitude is not None and self.longitude is not None:
                 self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
 
-            formatted_name = '.'.join(
+            self.formatted_name = '.'.join(
                 [self.vendor, self.device, self.shooting_time, self.file_format]) \
                 .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
                 .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
-            date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
-            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/', formatted_name)
-            self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                              Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
-                                                              formatted_name)
-            self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                                   Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
-                                                   formatted_name)
-            self.save()
 
-    def resolving_film(self):
+            if need_to_save_to_db:
+                date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
+                self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/', self.formatted_name)
+                self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                                                                  Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
+                                                                  self.formatted_name)
+                self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                                       Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
+                                                       self.formatted_name)
+                self.save()
+
+    def resolving_film(self, need_to_save_to_db=True):
         self.file_format = self.path.split('.')[-1]
         self.is_film = True
         self.order_id = int(time.time() * 1000)
-        formatted_name = str(self.order_id)
-        self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS, formatted_name + '.' + self.file_format)
-        self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                          Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
-                                                          formatted_name + '.jpg')
-        self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                               Static.PATH_SORTED_SHOW_PHOTOS + Static.KEY_FILMS + '/',
-                                               formatted_name + '.jpg')
-        self.save()
+        self.formatted_name = str(self.order_id)
+
+        if need_to_save_to_db:
+            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS, self.formatted_name + '.' + self.file_format)
+            self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                                                              Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
+                                                              self.formatted_name + '.jpg')
+            self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                                   Static.PATH_SORTED_SHOW_PHOTOS + Static.KEY_FILMS + '/',
+                                                   self.formatted_name + '.jpg')
+            self.save()
 
     def set_order(self, order):
         self.order_id = order

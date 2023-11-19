@@ -3,6 +3,7 @@ import logging
 import os
 import random
 
+from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
@@ -175,6 +176,29 @@ def reset(request):
     utils.unsort_files(Static.PATH_SORTED_RAW_PHOTOS, Static.PATH_UNSORTED_PHOTOS)
     utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UNSORTED_FILMS)
     return HttpResponse('bbbb')
+
+
+def uploader(request):
+    msg = ''
+    if request.method == 'POST':
+        if 'file' in request.FILES:
+            uploaded_file = request.FILES['file']
+            fs = FileSystemStorage()
+            save_path = Static.PATH_UPLOADED
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            filename = fs.save(os.path.join(save_path, uploaded_file.name), uploaded_file)
+
+            # 获取保存后的文件URL
+            file_url = fs.url(filename)
+            logger.info("File saved, url:", file_url)
+            msg = "上传成功!"
+        else:
+            msg = "未选择文件！"
+        context = {'msg': msg}
+        return render(request, 'img_manager.html', context)
+    else:
+        return render(request, 'img_manager.html')
 
 
 def wx_verify(request):

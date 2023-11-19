@@ -141,8 +141,8 @@ def decode_address_from_gps(lat, lng):
     :param GPS:
     :return:
     """
-    secret_key = 'zbLsuDDL4CS2U0M4KezOZZbGUY9iWtVf'
-    baidu_map_api = "http://api.map.baidu.com/geocoder/v2/?ak={0}&callback=renderReverse&location={1},{2}s&output=json&pois=0".format(
+    secret_key = 'tiH1vWxXhdEhvwWcNkv9wlh42MDFKomR'
+    baidu_map_api = "https://api.map.baidu.com/reverse_geocoding/v3?ak={0}&callback=renderReverse&location={1},{2}s&output=json&pois=0".format(
         secret_key, lat, lng)
     response = requests.get(baidu_map_api)
     content = response.text.replace("renderReverse&&renderReverse(", "")[:-1]

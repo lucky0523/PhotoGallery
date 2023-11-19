@@ -19,15 +19,16 @@ from django.conf import settings
 
 from PhotoGallery import views
 
-
 urlpatterns = [
     re_path(r'^$', views.nav),
     path('re/', views.resolving),
+    path('editor', views.editor),
+    path('uploader', views.uploader),
+
     path('query_list', views.query_list),
     path('query_image', views.query_image),
     path('reset', views.reset),
     path('imgviewer', views.img_viewer),
-    path('editor', views.editor),
     path('edit_photo', views.edit_photo),
     path('get_all_films', views.get_all_films),
     path('tencent9176013635572033544.txt/', views.wx_verify),
