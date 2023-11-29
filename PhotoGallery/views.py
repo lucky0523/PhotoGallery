@@ -114,10 +114,7 @@ def query_list(request):
     for p in plist:
         # p.read_exif()
         view_dict = utils.photo_to_dict(p)
-        if p.device in Static.DEVICES_DICT:
-            view_dict['device'] = Static.DEVICES_DICT[p.device]
-        else:
-            view_dict['device'] = p.device
+
         view_list.append(view_dict)
     # if int(randomly) > 0:
     # random.shuffle(view_list)
@@ -195,10 +192,17 @@ def uploader(request):
             msg = "上传成功!"
         else:
             msg = "未选择文件！"
-        context = {'msg': msg}
-        return render(request, 'img_manager.html', context)
     else:
-        return render(request, 'img_manager.html')
+        pass
+    photo_list = []
+    for sub_path in os.scandir(Static.PATH_UPLOADED):
+        if os.path.isfile(sub_path):
+            model = PhotoInfo(path=os.path.relpath(sub_path))
+            model.resolving(False, False)
+            photo_list.append(utils.photo_to_dict(model))
+            print(model)
+    context = {'msg': msg, 'photos': photo_list}
+    return render(request, 'img_manager.html', context)
 
 
 def wx_verify(request):

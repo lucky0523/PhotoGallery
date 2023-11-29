@@ -28,7 +28,15 @@ def is_number(s):
 
 
 def photo_to_dict(photo):
-    if photo.is_film:
+    if photo.show_path is None or photo.show_path == '':
+        view_dict = {'image': "/" + photo.path,
+                     'file_model': photo.film_model,
+                     'time': photo.shooting_time}
+        if photo.device in Static.DEVICES_DICT:
+            view_dict['device'] = Static.DEVICES_DICT[photo.device]
+        else:
+            view_dict['device'] = photo.device
+    elif photo.is_film:
         view_dict = {'id': photo.id,
                      'order': photo.order_id,
                      'image': photo.show_path[1:],
@@ -48,6 +56,10 @@ def photo_to_dict(photo):
                      'city': photo.city,
                      'district': photo.district,
                      'time': photo.shooting_time.strftime("%Y-%m-%d %H:%M:%S")}
+        if photo.device in Static.DEVICES_DICT:
+            view_dict['device'] = Static.DEVICES_DICT[photo.device]
+        else:
+            view_dict['device'] = photo.device
     return view_dict
 
 

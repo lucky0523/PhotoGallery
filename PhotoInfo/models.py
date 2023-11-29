@@ -38,11 +38,10 @@ class PhotoInfo(models.Model):
     formatted_name = models.CharField(max_length=200, default="", null=True, blank=True)
 
     def __str__(self):
-        return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\n' \
-            .format(self.vendor,
-                    self.device)
+        return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\nPath:{}\r\n' \
+            .format(self.vendor, self.device, self.path)
 
-    def resolving(self, need_to_save_to_db=True):
+    def resolving(self, need_to_save_to_db=True, need_to_get_gps=True):
         image_content = open(self.path, 'rb')
         self.file_format = self.path.split('.')[-1]
         logger.info('Handle image: ' + self.path)
@@ -77,26 +76,28 @@ class PhotoInfo(models.Model):
             if 'EXIF ExifImageWidth' in tags and 'EXIF ExifImageLength' in tags:
                 self.width = int(tags['EXIF ExifImageWidth'].printable)
                 self.length = int(tags['EXIF ExifImageLength'].printable)
-            try:
-                latitude_str = tags["GPS GPSLatitude"].printable[1:-1]
-                self.latitude = utils.sexagesimal2decimal(latitude_str)
-            except:
-                pass
-            try:
-                longitude_str = tags["GPS GPSLongitude"].printable[1:-1]
-                self.longitude = utils.sexagesimal2decimal(longitude_str)
-            except:
-                pass
-            try:
-                altitude_strs = tags["GPS GPSAltitude"].printable.split('/')
-                if altitude_strs.__len__() > 1:
-                    self.altitude = float(altitude_strs[0]) / float(altitude_strs[1])
-                else:
-                    self.altitude = float(altitude_strs[0])
-            except:
-                pass
-            if self.latitude is not None and self.longitude is not None:
-                self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
+
+            if need_to_get_gps:
+                try:
+                    latitude_str = tags["GPS GPSLatitude"].printable[1:-1]
+                    self.latitude = utils.sexagesimal2decimal(latitude_str)
+                except:
+                    pass
+                try:
+                    longitude_str = tags["GPS GPSLongitude"].printable[1:-1]
+                    self.longitude = utils.sexagesimal2decimal(longitude_str)
+                except:
+                    pass
+                try:
+                    altitude_strs = tags["GPS GPSAltitude"].printable.split('/')
+                    if altitude_strs.__len__() > 1:
+                        self.altitude = float(altitude_strs[0]) / float(altitude_strs[1])
+                    else:
+                        self.altitude = float(altitude_strs[0])
+                except:
+                    pass
+                if self.latitude is not None and self.longitude is not None:
+                    self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
 
             self.formatted_name = '.'.join(
                 [self.vendor, self.device, self.shooting_time, self.file_format]) \
