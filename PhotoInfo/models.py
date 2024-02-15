@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import exifread
 from datetime import datetime
@@ -36,12 +37,18 @@ class PhotoInfo(models.Model):
     is_film = models.BooleanField(default=False)
     film_model = models.CharField(max_length=30, default="", null=True, blank=True)
     formatted_name = models.CharField(max_length=200, default="", null=True, blank=True)
+    repeated = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.repeated = False
 
     def __str__(self):
         return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\nPath:{}\r\n' \
             .format(self.vendor, self.device, self.path)
 
     def resolving(self, need_to_save_to_db=True, need_to_get_gps=True):
+        logger.info('resolve photo: {}'.format(self.path))
         image_content = open(self.path, 'rb')
         self.file_format = self.path.split('.')[-1]
         logger.info('Handle image: ' + self.path)
@@ -97,7 +104,8 @@ class PhotoInfo(models.Model):
                 except:
                     pass
                 if self.latitude is not None and self.longitude is not None:
-                    self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
+                    self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude,
+                                                                                            self.longitude)
 
             self.formatted_name = '.'.join(
                 [self.vendor, self.device, self.shooting_time, self.file_format]) \
@@ -106,9 +114,11 @@ class PhotoInfo(models.Model):
 
             if need_to_save_to_db:
                 date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
-                self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/', self.formatted_name)
+                self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
+                                            self.formatted_name)
                 self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                                  Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
+                                                                  Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(
+                                                                      date.year) + '/',
                                                                   self.formatted_name)
                 self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
                                                        Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
@@ -122,7 +132,8 @@ class PhotoInfo(models.Model):
         self.formatted_name = str(self.order_id)
 
         if need_to_save_to_db:
-            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS, self.formatted_name + '.' + self.file_format)
+            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS,
+                                        self.formatted_name + '.' + self.file_format)
             self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
                                                               Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
                                                               self.formatted_name + '.jpg')
@@ -145,3 +156,5 @@ class PhotoInfo(models.Model):
         print(tags)
         print(int(tags['EXIF FocalLengthIn35mmFilm'].printable))
         # print(utils.decode_address_from_gps(self.latitude, self.longitude))
+
+

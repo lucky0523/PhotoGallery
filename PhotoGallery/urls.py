@@ -24,6 +24,7 @@ urlpatterns = [
     path('re/', views.resolving),
     path('editor', views.editor),
     path('uploader', views.uploader),
+    path('add_photo', views.add_photo),
 
     path('query_list', views.query_list),
     path('query_image', views.query_image),

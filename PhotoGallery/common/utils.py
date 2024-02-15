@@ -31,6 +31,7 @@ def photo_to_dict(photo):
     if photo.show_path is None or photo.show_path == '':
         view_dict = {'image': "/" + photo.path,
                      'file_model': photo.film_model,
+                     'formatted_name': photo.formatted_name,
                      'time': photo.shooting_time}
         if photo.device in Static.DEVICES_DICT:
             view_dict['device'] = Static.DEVICES_DICT[photo.device]

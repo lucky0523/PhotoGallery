@@ -205,5 +205,54 @@ def uploader(request):
     return render(request, 'img_manager.html', context)
 
 
+def add_photo(request):
+    msg = ''
+    if request.method == 'POST':
+        one = request.POST.get('one', -1)
+        is_film = request.POST.get('is_film', -1)
+        path = request.POST.get('path', -1)[1:]
+        if one == 'True':
+            logger.info('Add one photo: {}'.format(path))
+            add_one(path)
+            msg = '已添加一张'
+            pass
+        else:
+            logger.info('Add all photo')
+            add_all(Static.PATH_UPLOADED)
+            msg = '已添加全部'
+    return HttpResponse(msg)
+
+
+def add_all(path, is_film=False):
+    if is_film:
+        for sub_path in os.scandir(path):
+            if os.path.isfile(sub_path):
+                model = PhotoInfo(path=os.path.relpath(sub_path))
+                model.resolving_film()
+    else:
+        for sub_path in os.scandir(path):
+            if os.path.isfile(sub_path):
+                model = PhotoInfo(path=os.path.relpath(sub_path))
+                model.resolving()
+        plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
+        i = 0
+        for p in plist:
+            p.set_order(i)
+            i = i + 1
+
+
+def add_one(path, is_film=False):
+    if is_film:
+        pass
+    else:
+        model = PhotoInfo(path=path)
+        model.resolving()
+        plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
+        i = 0
+        for p in plist:
+            p.set_order(i)
+            i = i + 1
+
+
 def wx_verify(request):
     return HttpResponse('15496962470248715457')

@@ -5,6 +5,9 @@
     <title>上传图片</title>
 </head>
 <body>
+<a href="/">
+    返回首页
+</a>
 <div id="msg_block">{{ msg }}</div>
 <form action="/uploader" method="post" enctype="multipart/form-data">
     <p><input type="file" name="file" accept="image/*"></p>
@@ -13,14 +16,25 @@
     <input type="submit" value='上传'>
 </form>
 <br>
+<form action="/add_photo" method="post" enctype="multipart/form-data">
+    <input type="submit" value='全部添加'>
+</form>
+<br>
 {% for item in photos %}
     <div style="display: flex; align-items: center;">
-        <img src="{{ item.image }}" style="width:200px; height:auto;">
+        <img src="{{ item.image }}" style="width:300px; height:auto;">
         <div>
             <p style="margin-left: 10px;">{{ item.device }}</p>
             <p style="margin-left: 10px;">{{ item.time }}</p>
-            <p style="margin-left: 10px;">这是一段文字。</p>
-            <p style="margin-left: 10px;">这是一段文字。</p>
+            <p style="margin-left: 10px;">{{ item.formatted_name }}</p>
+            <form action="/add_photo" method="post">
+                <label>
+                    <input type="hidden" name="one" value="True">
+                    <input type="hidden" name="is_film" value="True">
+                    <input onfocus=this.blur() type="text" name="path" size="50" value="{{ item.image }}">
+                </label>
+                <input type="submit" value='添加一张'>
+            </form>
         </div>
     </div>
 {% endfor %}
