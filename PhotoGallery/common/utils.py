@@ -51,6 +51,7 @@ def photo_to_dict(photo):
                      'order': photo.order_id,
                      'image': photo.show_path[1:],
                      'thumbnail': photo.thumbnail_path[1:],
+                     'formatted_name': photo.formatted_name,
                      'is_film': photo.is_film,
                      'iso': photo.iso,
                      'f_number': photo.f_number,
@@ -117,6 +118,8 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
         crop_img = img.crop((int((width - height) / 2), 0, int((width - height) / 2) + height, height))
     img.close()
     crop_img = crop_img.resize((side, side), Image.LANCZOS)
+    if crop_img.mode != 'RGB':
+        crop_img = crop_img.convert('RGB')
     crop_img.save(dstpath + dstname, quality=80)
     logger.info("Save thumbnail -> %s" % (dstpath + dstname))
     return dstpath + dstname
@@ -139,7 +142,9 @@ def make_show_image(src_file, max_side, dstpath, dstname):
         resize_width = max_side
         resize_height = int(height / (width / max_side))
     crop_img = img.resize((resize_width, resize_height), Image.LANCZOS)
-    crop_img.save(dstpath + dstname, quality=80)
+    if crop_img.mode != 'RGB':
+        crop_img = crop_img.convert('RGB')
+        crop_img.save(dstpath + dstname, quality=80)
     img.close()
     logger.info("Save resize image -> %s" % (dstpath + dstname))
     return dstpath + dstname
@@ -191,3 +196,20 @@ def unsort_files(scr_dir, dst_dir):
     for root, dirs, files in os.walk(scr_dir, topdown=False):
         for f in files:
             move_file(os.path.join(root, f), dst_dir)
+
+
+def delete_photo(photo):
+    os.remove(photo.thumbnail_path)
+    os.remove(photo.show_path)
+    os.remove(photo.path)
+    photo.delete()
+
+
+def reset_photo(photo):
+    os.remove(photo.thumbnail_path)
+    os.remove(photo.show_path)
+    if photo.is_film:
+        move_file(photo.path, Static.PATH_UPLOADED_FILMS)
+    else:
+        move_file(photo.path, Static.PATH_UPLOADED)
+    photo.delete()

@@ -131,25 +131,15 @@ def img_viewer(request):
 
 
 def editor(request):
+    msg = ''
     id_str = request.GET.get('id', -1)
-    photo = PhotoInfo.objects.filter(id=id_str).first()
-    view_dict = utils.photo_to_dict(photo)
-    context = {'item': view_dict}
-    return render(request, 'image_viewer.html', context)
-
-
-def edit_photo(request):
-    id_str = request.POST.get('id', -1)
-    body = request.body
-    file_model = request.POST.get('file_model', -1)
-    p = PhotoInfo.objects.filter(id=id_str).first()
-    view_dict = {'code': 404, 'status': 'Not found!'}
-    if p is not None:
-        if file_model != -1:
-            logger.info("Edit No.%s: %s" % (id_str, body.decode()))
-            view_dict = {'code': 200}
-            p.set_file_model(file_model)
-    return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
+    qlist = PhotoInfo.objects.all().order_by("order_id")
+    photo_list = []
+    for photo in qlist:
+        print(photo)
+        photo_list.append(utils.photo_to_dict(photo))
+    context = {'msg': msg, 'photos': photo_list}
+    return render(request, 'editor.html', context)
 
 
 def get_all_films(request):
@@ -214,7 +204,7 @@ def uploader(request):
     for p in photo_list:
         print(p)
     context = {'msg': msg, 'photos': photo_list}
-    return render(request, 'img_manager.html', context)
+    return render(request, 'uploader.html', context)
 
 
 def add_photo(request):
@@ -232,8 +222,12 @@ def add_photo(request):
             logger.info('Add all photo')
             add_all(Static.PATH_UPLOADED)
             msg = '已添加全部'
-    context = {'msg': msg}
-    return render(request, 'msg.html', context)
+    html = ("<html><body>%s<br><br>"
+            "<a href=\"/\">返回首页</a><br>"
+            "<a href=\"/editor\">编辑图片</a><br>"
+            "<a href=\"/uploader\">继续上传</a>"
+            "</body></html>") % msg
+    return HttpResponse(html)
 
 
 def add_all(path, is_film=False):
@@ -266,6 +260,30 @@ def add_one(path, is_film=False):
         for p in plist:
             p.set_order(i)
             i = i + 1
+
+
+def modify(request):
+    msg = ''
+    id_str = request.GET.get('id', -1)
+    action = request.GET.get('act', -1)
+    logger.info('Modifying: action=%s, id=%s', action, id_str)
+    idd = int(id_str)
+    if action == 'del':
+        p = PhotoInfo.objects.all().filter(id=idd).first()
+        if p is not None:
+            utils.delete_photo(p)
+            msg = '已删除' + id_str
+    elif action == 'reset':
+        p = PhotoInfo.objects.all().filter(id=idd).first()
+        if p is not None:
+            utils.reset_photo(p)
+            msg = '已重置' + id_str
+    html = ("<html><body>%s<br><br>"
+            "<a href=\"/\">返回首页</a><br>"
+            "<a href=\"/editor\">编辑图片</a><br>"
+            "<a href=\"/uploader\">继续上传</a>"
+            "</body></html>") % msg
+    return HttpResponse(html)
 
 
 def wx_verify(request):

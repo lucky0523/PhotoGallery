@@ -32,7 +32,7 @@
             {% else %}
                 <p style="margin-left: 10px;">数码</p>
             {% endif %}
-            <form action="/add_photo" method="post">
+            <form style="margin-left: 10px;" action="/add_photo" method="post">
                 <label>
                     <input type="hidden" name="one" value="True">
                     <input type="hidden" name="is_film" value="{{ item.is_film }}">
