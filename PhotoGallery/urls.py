@@ -36,4 +36,5 @@ urlpatterns = [
     re_path('dynamic/photos/sorted/show/(?P<path>.*)', serve, {'document_root': settings.SHOW_IMAGE_ROOT}),
     re_path('dynamic/photos/sorted/thumbnail/(?P<path>.*)', serve, {'document_root': settings.THUMBNAIL_IMAGE_ROOT}),
     re_path('dynamic/uploaded/(?P<path>.*)', serve, {'document_root': settings.UPLOADED_IMAGE_ROOT}),
+    re_path('dynamic/uploaded_films/(?P<path>.*)', serve, {'document_root': settings.UPLOADED_FILMS_ROOT}),
 ]

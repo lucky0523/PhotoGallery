@@ -178,10 +178,14 @@ def reset(request):
 def uploader(request):
     msg = ''
     if request.method == 'POST':
+        is_film = request.POST.get('is_film', -1) == "True"
         if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
             fs = FileSystemStorage()
             save_path = Static.PATH_UPLOADED
+            if is_film:
+                logger.info("Upload film photo")
+                save_path = Static.PATH_UPLOADED_FILMS
             if not os.path.exists(save_path):
                 os.makedirs(save_path)
             filename = fs.save(os.path.join(save_path, uploaded_file.name), uploaded_file)
@@ -199,8 +203,16 @@ def uploader(request):
         if os.path.isfile(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path))
             model.resolving(False, False)
+            print(model.is_film)
             photo_list.append(utils.photo_to_dict(model))
-            print(model)
+    for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS):
+        if os.path.isfile(sub_path):
+            model = PhotoInfo(path=os.path.relpath(sub_path))
+            model.resolving_film(False)
+            print(model.is_film)
+            photo_list.append(utils.photo_to_dict(model))
+    for p in photo_list:
+        print(p)
     context = {'msg': msg, 'photos': photo_list}
     return render(request, 'img_manager.html', context)
 
@@ -208,19 +220,20 @@ def uploader(request):
 def add_photo(request):
     msg = ''
     if request.method == 'POST':
-        one = request.POST.get('one', -1)
-        is_film = request.POST.get('is_film', -1)
+        one = request.POST.get('one', -1) == "True"
+        is_film = request.POST.get('is_film', -1) == "True"
         path = request.POST.get('path', -1)[1:]
-        if one == 'True':
+        if one:
             logger.info('Add one photo: {}'.format(path))
-            add_one(path)
+            add_one(path, is_film)
             msg = '已添加一张'
             pass
         else:
             logger.info('Add all photo')
             add_all(Static.PATH_UPLOADED)
             msg = '已添加全部'
-    return HttpResponse(msg)
+    context = {'msg': msg}
+    return render(request, 'msg.html', context)
 
 
 def add_all(path, is_film=False):
@@ -243,7 +256,8 @@ def add_all(path, is_film=False):
 
 def add_one(path, is_film=False):
     if is_film:
-        pass
+        model = PhotoInfo(path=path)
+        model.resolving_film()
     else:
         model = PhotoInfo(path=path)
         model.resolving()

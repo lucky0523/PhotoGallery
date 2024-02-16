@@ -29,8 +29,10 @@ def is_number(s):
 
 def photo_to_dict(photo):
     if photo.show_path is None or photo.show_path == '':
+        # 上传页面生成预览图片的信息时走这里
         view_dict = {'image': "/" + photo.path,
                      'file_model': photo.film_model,
+                     'is_film': photo.is_film,
                      'formatted_name': photo.formatted_name,
                      'time': photo.shooting_time}
         if photo.device in Static.DEVICES_DICT:
