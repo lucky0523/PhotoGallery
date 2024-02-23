@@ -104,8 +104,7 @@ class PhotoInfo(models.Model):
                 except:
                     pass
                 if self.latitude is not None and self.longitude is not None:
-                    self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude,
-                                                                                            self.longitude)
+                    self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
 
             self.formatted_name = '.'.join(
                 [self.vendor, self.device, self.shooting_time, self.file_format]) \
@@ -117,8 +116,7 @@ class PhotoInfo(models.Model):
                 self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
                                             self.formatted_name)
                 self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                                  Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(
-                                                                      date.year) + '/',
+                                                                  Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
                                                                   self.formatted_name)
                 self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
                                                        Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
@@ -146,7 +144,14 @@ class PhotoInfo(models.Model):
         self.order_id = order
         self.save()
 
-    def set_file_model(self, model):
+    def set_position(self, longitude, latitude):
+        self.longitude = float(longitude)
+        self.latitude = float(latitude)
+        self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
+        self.save()
+
+    # 胶卷型号
+    def set_film_model(self, model):
         self.film_model = model
         self.save()
 
@@ -156,5 +161,3 @@ class PhotoInfo(models.Model):
         print(tags)
         print(int(tags['EXIF FocalLengthIn35mmFilm'].printable))
         # print(utils.decode_address_from_gps(self.latitude, self.longitude))
-
-

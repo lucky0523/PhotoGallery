@@ -3,32 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <title>相册编辑</title>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            height: 80%;
+            width: 80%;
+            margin-top: 50px;
+            margin-left: 200px;
+            padding: 20px;
+            border: 1px solid #888;
+        }
+
+        .image_overlay {
+            position: absolute;
+            width: 100%;
+            bottom: 200px;
+            left: 20px;
+        }
+
+        #container {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+    </style>
 </head>
 <body>
 {% for item in photos %}
     <div style="display: flex; align-items: center;">
         <img src="{{ item.image }}" style="width:300px; height:auto;">
         <div>
-            <p style="margin-left: 10px;">ID: {{ item.id }}</p>
-            <p style="margin-left: 10px;">{{ item.device }} </p>
+            <p style="margin-left: 10px;">ID: {{ item.id }} 设备: {{ item.device }}</p>
             <p style="margin-left: 10px;">{{ item.formatted_name }}</p>
             {% if item.is_film %}
                 <p style="margin-left: 10px;">胶片</p>
             {% else %}
                 <p style="margin-left: 10px;">{{ item.time }} {{ item.city }} {{ item.district }}</p>
             {% endif %}
+            <button style="margin-left: 10px;" onclick='show_modal({{ item.id }},"{{ item.image }}")'>选取地址</button>
             <form style="margin-left: 10px;" action="/modify" method="get">
                 <label>
                     <input type="hidden" name="id" value="{{ item.id }}">
                     <input type="hidden" name="act" value="del">
                     <input type="hidden" name="is_film" value="{{ item.is_film }}">
+                    <input id="longitude_{{ item.id }}" name="longitude" value="{{ item.longitude }}">
+                    <input id="latitude_{{ item.id }}" name="latitude" value="{{ item.latitude }}">
                 </label>
-                <button type="submit" name="act" value="del">删除</button>
+                <button type="submit" name="act" value="modify">修改</button>
+                <br>
+                <br>
                 <button type="submit" name="act" value="reset">重置</button>
+                <button type="submit" name="act" value="del">删除</button>
             </form>
         </div>
     </div>
     <br>
 {% endfor %}
+
+<!-- 模态窗口 -->
+<div id="map_modal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex;justify-content: flex-end;">
+            <div>
+                <div style="display: flex;">
+                    <div>经度:</div>
+                    <div id="pick_lng_text"></div>
+                </div>
+                <div style="display: flex;">
+                    <div>纬度:</div>
+                    <div id="pick_lat_text"></div>
+                </div>
+            </div>
+            <button style="margin-left: 40%" onclick='hide_modal()'>确定</button>
+        </div>
+        {#        <div id="page_content" style="width: 95%;height: 95%;margin: auto;"></div>#}
+        <div id="container" style="width: 95%;height: 95%;margin: auto;"></div>
+        <img class="image_overlay" id="pick_img" src="" style="width:400px; height:auto;">
+        <br>
+        <button id="closeModal" onclick='hide_modal()'>关闭并修改经纬度</button>
+    </div>
+</div>
 </body>
 </html>
+
+<script src="/static/js/jquery-3.1.1.min.js"></script>
+<script src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=TSuBY5iecr0Qjq8jvTJrghaLchcEsXMG"></script>
+<script type="text/javascript">
+    var modal = document.getElementById("map_modal");
+    var map = new BMapGL.Map('container');
+    var modifying_id = -1;
+    var pick_longitude = -1;
+    var pick_latitude = -1;
+
+    function show_modal(m_id, img) {
+        {#$('#page_content').load('/posi_picker');#}
+        {#alert(m_id)#}
+        $("#pick_img").attr("src", img);
+        $("#pick_lng_text").text("-1");
+        $("#pick_lat_text").text("-1");
+        modifying_id = m_id
+        modal.style.display = "block";
+    }
+
+    function hide_modal() {
+        modal.style.display = "none";
+        var longitude_input = document.getElementById("longitude_" + modifying_id);
+        var latitude_input = document.getElementById("latitude_" + modifying_id);
+        if (pick_longitude != -1 && pick_latitude != -1) {
+            longitude_input.value = pick_longitude;
+            latitude_input.value = pick_latitude;
+        }
+        pick_longitude = -1;
+        pick_latitude = -1;
+    }
+
+    $(document).keydown(function (event) {
+        if (event.keyCode == 27) {
+            setTimeout(function () {
+                hide_modal();
+            }, 100)
+        }
+    });
+
+    map.centerAndZoom(new BMapGL.Point(116.404, 39.928), 15);
+    map.enableScrollWheelZoom(true);
+
+    map.addEventListener('click', function (e) {
+        console.log(Object.keys(e.latlng))
+        pick_longitude = e.latlng.lng;
+        pick_latitude = e.latlng.lat;
+        $("#pick_lng_text").text(e.latlng.lng);
+        $("#pick_lat_text").text(e.latlng.lat);
+    });
+</script>

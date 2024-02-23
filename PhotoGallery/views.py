@@ -136,7 +136,6 @@ def editor(request):
     qlist = PhotoInfo.objects.all().order_by("order_id")
     photo_list = []
     for photo in qlist:
-        print(photo)
         photo_list.append(utils.photo_to_dict(photo))
     context = {'msg': msg, 'photos': photo_list}
     return render(request, 'editor.html', context)
@@ -273,6 +272,22 @@ def modify(request):
         if p is not None:
             utils.delete_photo(p)
             msg = '已删除' + id_str
+    elif action == 'modify':
+        longitude = request.GET.get('longitude', -1)
+        latitude = request.GET.get('latitude', -1)
+        p = PhotoInfo.objects.all().filter(id=idd).first()
+        if p is not None:
+            if latitude != 'None' and longitude != 'None':
+                if utils.is_number(latitude):
+                    if utils.is_number(longitude):
+                        p.set_position(latitude, longitude)
+                        logger.info('Modify position, longitude=%s, latitude=%s' % (longitude, latitude))
+                    else:
+                        logger.error('longitude is not number!!')
+                else:
+                    logger.error('Latitude is not number!!')
+            else:
+                logger.error('Latitude or longitude is None!!')
     elif action == 'reset':
         p = PhotoInfo.objects.all().filter(id=idd).first()
         if p is not None:
@@ -288,3 +303,7 @@ def modify(request):
 
 def wx_verify(request):
     return HttpResponse('15496962470248715457')
+
+
+def position_picker(request):
+    return render(request, 'map_position_picker.html', {'message': "Hello World!"})
