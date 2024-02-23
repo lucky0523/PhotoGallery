@@ -59,6 +59,8 @@ def photo_to_dict(photo):
                      'focal_length': photo.equivalent_focal_length,
                      'city': photo.city,
                      'district': photo.district,
+                     'longitude': photo.longitude,
+                     'latitude': photo.latitude,
                      'time': photo.shooting_time.strftime("%Y-%m-%d %H:%M:%S")}
         if photo.device in Static.DEVICES_DICT:
             view_dict['device'] = Static.DEVICES_DICT[photo.device]
@@ -161,12 +163,13 @@ def decode_address_from_gps(lat, lng):
     :param GPS:
     :return:
     """
-    secret_key = 'tiH1vWxXhdEhvwWcNkv9wlh42MDFKomR'
     baidu_map_api = "https://api.map.baidu.com/reverse_geocoding/v3?ak={0}&callback=renderReverse&location={1},{2}s&output=json&pois=0".format(
-        secret_key, lat, lng)
+        Static.KEY_BAIDUMAP_SERVER_SECRET_AK, lat, lng)
+    logger.info('Baidu Map API: ' + baidu_map_api)
     response = requests.get(baidu_map_api)
     content = response.text.replace("renderReverse&&renderReverse(", "")[:-1]
     baidu_map_address = json.loads(content)
+    logger.info(baidu_map_address)
     formatted_address = baidu_map_address["result"]["formatted_address"]
     business = baidu_map_address["result"]["business"]
     province = baidu_map_address["result"]["addressComponent"]["province"]
@@ -199,9 +202,12 @@ def unsort_files(scr_dir, dst_dir):
 
 
 def delete_photo(photo):
-    os.remove(photo.thumbnail_path)
-    os.remove(photo.show_path)
-    os.remove(photo.path)
+    try:
+        os.remove(photo.thumbnail_path)
+        os.remove(photo.show_path)
+        os.remove(photo.path)
+    except FileNotFoundError as e:
+        logger.error(e)
     photo.delete()
 
 
