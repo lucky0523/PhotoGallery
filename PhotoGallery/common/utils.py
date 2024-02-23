@@ -146,7 +146,7 @@ def make_show_image(src_file, max_side, dstpath, dstname):
     crop_img = img.resize((resize_width, resize_height), Image.LANCZOS)
     if crop_img.mode != 'RGB':
         crop_img = crop_img.convert('RGB')
-        crop_img.save(dstpath + dstname, quality=80)
+    crop_img.save(dstpath + dstname, quality=80)
     img.close()
     logger.info("Save resize image -> %s" % (dstpath + dstname))
     return dstpath + dstname
