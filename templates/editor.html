@@ -141,6 +141,8 @@
 
     map.centerAndZoom(new BMapGL.Point(116.404, 39.928), 15);
     map.enableScrollWheelZoom(true);
+    {#map.setMapType(BMAP_SATELLITE_MAP);#}
+    {#map.setMapType(MAP_TYPE_NORMAL);#}
 
     map.addEventListener('click', function (e) {
         console.log(Object.keys(e.latlng))

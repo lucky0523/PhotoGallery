@@ -37,4 +37,7 @@ urlpatterns = [
     re_path('dynamic/photos/sorted/thumbnail/(?P<path>.*)', serve, {'document_root': settings.THUMBNAIL_IMAGE_ROOT}),
     re_path('dynamic/uploaded/(?P<path>.*)', serve, {'document_root': settings.UPLOADED_IMAGE_ROOT}),
     re_path('dynamic/uploaded_films/(?P<path>.*)', serve, {'document_root': settings.UPLOADED_FILMS_ROOT}),
+
+    path('posi_picker', views.position_picker),
+
 ]
