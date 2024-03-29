@@ -211,8 +211,8 @@ def add_photo(request):
     if request.method == 'POST':
         one = request.POST.get('one', -1) == "True"
         is_film = request.POST.get('is_film', -1) == "True"
-        path = request.POST.get('path', -1)[1:]
         if one:
+            path = request.POST.get('path', -1)[1:]
             logger.info('Add one photo: {}'.format(path))
             add_one(path, is_film)
             msg = '已添加一张'
