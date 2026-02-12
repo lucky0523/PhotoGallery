@@ -133,3 +133,7 @@ UPLOADED_FILMS_ROOT = os.path.join(BASE_DIR, "dynamic//uploaded_films")
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+from PhotoGallery.common import Static
+
+Static.ensure_path_directories_exist()

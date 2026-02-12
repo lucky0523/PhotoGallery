@@ -4,10 +4,15 @@ import os
 import shutil
 import requests
 from PIL import Image, ExifTags
+import pillow_heif
+from urllib.parse import urlencode
+
+# 注册 HEIC 格式支持
+pillow_heif.register_heif_opener()
 
 from PhotoGallery.common import Static
 
-LOG_TAG = '[PhotoGallery.utils]'
+LOG_TAG = '[PhotoGallery.utils] '
 logging.basicConfig(level=Static.LOG_LEVEL, format='%(asctime)s - %(name)s %(levelname)s - %(message)s')
 logger = logging.getLogger(LOG_TAG)
 
@@ -34,7 +39,8 @@ def photo_to_dict(photo):
                      'file_model': photo.film_model,
                      'is_film': photo.is_film,
                      'formatted_name': photo.formatted_name,
-                     'time': photo.shooting_time}
+                     'time': photo.shooting_time,
+                     'thumbnail': photo.thumbnail_path}
         if photo.device in Static.DEVICES_DICT:
             view_dict['device'] = Static.DEVICES_DICT[photo.device]
         else:
@@ -108,10 +114,16 @@ def open_and_rotate(src_file):
 
 
 def make_square_thumbnail(src_file, side, dstpath, dstname):
+    logger.info("Make square thumbnail,dstpath %s, dstname %s" % (dstpath, dstname))
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
         os.makedirs(dstpath)
+    #dstname的后缀如果不是jpg，就改成jpg
+    if not dstname.endswith('.jpg'):
+        base_name, ext = os.path.splitext(dstname)
+        dstname = base_name + '.jpg'
+
     img = open_and_rotate(src_file)
     width, height = img.size
     if width < height:
@@ -128,10 +140,15 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
 
 
 def make_show_image(src_file, max_side, dstpath, dstname):
+    logger.info("Make show image,dstpath:%s, dstname:%s, max_side:%s" % (dstpath, dstname, max_side))
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
         os.makedirs(dstpath)
+    #dstname的后缀如果不是jpg，就改成jpg
+    if not dstname.endswith('.jpg'):
+        base_name, ext = os.path.splitext(dstname)
+        dstname = base_name + '.jpg'
     img = open_and_rotate(src_file)
     width, height = img.size
     if max(max_side, width, height) == max_side:
@@ -156,28 +173,88 @@ def sexagesimal2decimal(xtitude_str):
     deg, min, sec = [x.replace(' ', '') for x in str(xtitude_str).split(',')]
     return float(deg) + ((float(min) + (float(sec.split('/')[0]) / float(sec.split('/')[-1]) / 60)) / 60)
 
-
+""" 百度逆地理编码接口，不支持中国以外的经纬度
 def decode_address_from_gps(lat, lng):
-    """
+    '''
     使用Geocoding API把经纬度坐标转换为结构化地址。
     :param GPS:
     :return:
-    """
-    baidu_map_api = "https://api.map.baidu.com/reverse_geocoding/v3?ak={0}&callback=renderReverse&location={1},{2}s&output=json&pois=0".format(
-        Static.KEY_BAIDUMAP_SERVER_SECRET_AK, lat, lng)
+    '''
+    logger.info("Decode address from gps, lat: %s, lng: %s" % (lat, lng))
+    baidu_map_api = "https://api.map.baidu.com/reverse_geocoding/v3/?ak={0}&extensions_poi=1&entire_poi=1&sort_strategy=distance&output=json&coordtype=bd09ll&location={1}%2C{2}".format(
+        Static.KEY_BAIDUMAP_SERVER_SECRET_AK, lng, lat)
     logger.info('Baidu Map API: ' + baidu_map_api)
     response = requests.get(baidu_map_api)
     content = response.text.replace("renderReverse&&renderReverse(", "")[:-1]
-    baidu_map_address = json.loads(content)
-    logger.info(baidu_map_address)
-    formatted_address = baidu_map_address["result"]["formatted_address"]
-    business = baidu_map_address["result"]["business"]
-    province = baidu_map_address["result"]["addressComponent"]["province"]
-    city = baidu_map_address["result"]["addressComponent"]["city"]
-    district = baidu_map_address["result"]["addressComponent"]["district"]
-    location = baidu_map_address["result"]["sematic_description"]
-    logger.info("Decode geo [%.2f, %.2f] -> %s,%s,%s" % (lng, lat, province, city, district))
+    baidu_map_address = json.loads(response.text)
+    status = baidu_map_address["status"]
+    formatted_address = ""
+    business = ""
+    province = ""
+    city = ""
+    district = ""
+    if status == 0:
+        logger.info(baidu_map_address)
+        formatted_address = baidu_map_address["result"]["formatted_address"]
+        business = baidu_map_address["result"]["business"]
+        province = baidu_map_address["result"]["addressComponent"]["province"]
+        city = baidu_map_address["result"]["addressComponent"]["city"]
+        district = baidu_map_address["result"]["addressComponent"]["district"]
+        location = baidu_map_address["result"]["sematic_description"]
+        logger.info("Decode geo [%.2f, %.2f] -> %s,%s,%s" % (lng, lat, province, city, district))
+    else:
+        logger.error(baidu_map_address)
+
     return province, city, district
+"""
+
+"""
+使用BigDataCloud的接口根据经纬度获取地址信息
+:param lat: 纬度
+:param lng: 经度
+:return: province, city, district, country
+"""
+def decode_address_from_gps(lat, lng):
+    logger.info(f"Decode address from GPS using BigDataCloud, lat: {lat}, lng: {lng}")
+
+    try:
+        # BigDataCloud反向地理编码API
+        api_url = f"https://api.bigdatacloud.net/data/reverse-geocode-client"
+        params = {
+            'latitude': lat,
+            'longitude': lng,
+            'localityLanguage': 'zh',  # 使用中文返回结果
+            'key': Static.KEY_BIGDATACLOUD_API_KEY
+        }
+        
+        # 构建完整的URL用于调试
+        full_url = f"{api_url}?{urlencode(params)}"
+        logger.info(f"Request URL: {full_url}")
+        
+        response = requests.get(api_url, params=params, timeout=10)
+        response.raise_for_status()  # 检查HTTP错误
+        
+        data = response.json()
+        logger.info(f"BigDataCloud API response: {data}")
+        
+        # 提取地址信息
+        country = data.get('countryName', '')
+        province = data.get('principalSubdivision', '')
+        city = data.get('city', '')
+        district = data.get('locality', '')
+        
+        # 处理可能的空值
+        if not city:
+            city = data.get('principalSubdivision', '')
+        if not district:
+            district = data.get('city', '')
+        
+        logger.info(f"Decoded address: country={country}, province={province}, city={city}, district={district}")
+        return country, province, city, district
+        
+    except Exception as e:
+        logger.error(f"Error decoding address from GPS: {e}")
+        return '', '', '', ''
 
 
 def clear_dir(dir_path):
@@ -219,3 +296,6 @@ def reset_photo(photo):
     else:
         move_file(photo.path, Static.PATH_UPLOADED)
     photo.delete()
+
+def is_photo_file(file_name):
+    return os.path.isfile(file_name) and file_name.name.lower().endswith(('.jpg', 'jpeg', 'png', 'bmp', 'heic'))

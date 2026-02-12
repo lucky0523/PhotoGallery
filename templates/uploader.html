@@ -5,24 +5,26 @@
     <title>上传图片</title>
 </head>
 <body>
-<a href="/">
-    返回首页
-</a>
+{% include 'backend_header.html' %}
+
 <div id="msg_block">{{ msg }}</div>
 <form action="/uploader" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="upload">
     <p><input type="file" name="file" accept="image/*"></p>
     <label><input type="radio" name="is_film" value="False" checked>数码
         <input type="radio" name="is_film" value="True">胶片</label>
-    <input type="submit" value='上传'>
+    <input type="submit" value='上传至缓冲区'>
 </form>
 <br>
-<form action="/add_photo" method="post" enctype="multipart/form-data">
-    <input type="submit" value='全部添加'>
+<form action="/uploader" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="add_to_album">
+    <input type="hidden" name="amount" value="all">
+    <input type="submit" value='全部添加至相册'>
 </form>
 <br>
 {% for item in photos %}
     <div style="display: flex; align-items: center;">
-        <img src="{{ item.image }}" style="width:300px; height:auto;">
+        <img src="{{ item.thumbnail }}" style="width:300px; height:auto;">
         <div>
             <p style="margin-left: 10px;">{{ item.device }}</p>
             <p style="margin-left: 10px;">{{ item.time }}</p>
@@ -32,13 +34,14 @@
             {% else %}
                 <p style="margin-left: 10px;">数码</p>
             {% endif %}
-            <form style="margin-left: 10px;" action="/add_photo" method="post">
+            <form style="margin-left: 10px;" action="/uploader" method="post">
                 <label>
-                    <input type="hidden" name="one" value="True">
+                    <input type="hidden" name="action" value="add_to_album">
+                    <input type="hidden" name="amount" value="one">
                     <input type="hidden" name="is_film" value="{{ item.is_film }}">
                     <input onfocus=this.blur() type="text" name="path" size="50" value="{{ item.image }}">
                 </label>
-                <input type="submit" value='添加一张'>
+                <input type="submit" value='添加一张至相册'>
             </form>
         </div>
     </div>

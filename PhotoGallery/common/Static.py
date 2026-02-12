@@ -1,4 +1,5 @@
 import logging
+import os
 
 LANGUAGE = 'zh'
 
@@ -14,7 +15,8 @@ PATH_SORTED_THUMBNAIL_PHOTOS = './dynamic/photos/sorted/thumbnail/'
 PATH_UNSORTED_FILMS = './dynamic/photos/unsorted_films/'
 PATH_SORTED_RAW_FILMS = './dynamic/photos/sorted/raw_films/'
 PATH_UPLOADED = "./dynamic/uploaded/"
-PATH_UPLOADED_FILMS = "./dynamic/uploaded_films/"
+PATH_UPLOADED_TEMP = "./dynamic/uploaded/temp"
+PATH_UPLOADED_FILMS = "./dynamic/uploaded/films/"
 
 SIZE_THUMBNAIL = 500
 SIZE_SHOW_MAX_SIDE = 2400
@@ -24,6 +26,11 @@ EARLIER_YEAR = 2019
 
 KEY_BAIDUMAP_SERVER_SECRET_AK = 'tiH1vWxXhdEhvwWcNkv9wlh42MDFKomR'
 KEY_BAIDUMAP_WEB_SECRET_AK = 'TSuBY5iecr0Qjq8jvTJrghaLchcEsXMG'
+KEY_LOCATIONIQ_API_KEY = 'pk.01dc375f25ac297af2c84a48532a291c'
+KEY_BIGDATACLOUD_API_KEY = 'bdc_9309edc9429241c382c2deac7943d59c'
+
+KEY_FILM = 'film'
+KEY_DIGITAL = 'digital'
 
 DEVICES_DICT = {
     'M2007J1SC': 'Mi10 Ultra',
@@ -31,3 +38,20 @@ DEVICES_DICT = {
     'SM-G9650': 'Samsung S9',
     'FC220': 'Dji Mavic Pro',
 }
+
+
+def ensure_path_directories_exist():
+    """
+    自动创建所有以 PATH_ 开头的路径目录
+    """
+    import sys
+    current_module = sys.modules[__name__]
+    for attr_name in dir(current_module):
+        if attr_name.startswith('PATH_'):
+            path = getattr(current_module, attr_name)
+            if isinstance(path, str) and path.strip():
+                if not os.path.exists(path):
+                    os.makedirs(path, exist_ok=True)
+                    logging.info(f"Created directory: {path}")
+                else:
+                    logging.info(f"Directory already exists: {path}")

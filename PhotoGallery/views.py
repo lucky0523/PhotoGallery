@@ -12,7 +12,7 @@ from PhotoGallery.common import Static, utils
 from PhotoInfo.models import PhotoInfo
 
 LOG_TAG = '[PhotoGallery.views] '
-logging.basicConfig(level=Static.LOG_LEVEL, format='%(asctime)s - %(name)s %(levelname)s - %(message)s')
+logging.basicConfig(level=Static.LOG_LEVEL, force=True, format='%(asctime)s - %(name)s %(levelname)s - %(message)s')
 logger = logging.getLogger(LOG_TAG)
 
 
@@ -32,19 +32,19 @@ def nav(request):
                 else:
                     dlist.append(os.path.basename(sub_path))
         context = {'PhotoDictionary': dlist}
-        print(dlist)
+        logger.info(f'PhotoDictionary: {dlist}')
         dlist.sort(reverse=True)
         return render(request, 'navigation.html', context)
 
 
 def resolving(request):
     for sub_path in os.scandir(Static.PATH_UNSORTED_PHOTOS):
-        if os.path.isfile(sub_path):
+        if utils.is_photo_file(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path))
-            model.resolving()
+            model.resolving_digital()
 
     for sub_path in os.scandir(Static.PATH_UNSORTED_FILMS):
-        if os.path.isfile(sub_path):
+        if utils.is_photo_file(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path))
             model.resolving_film()
     plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
@@ -52,7 +52,7 @@ def resolving(request):
     for p in plist:
         p.set_order(i)
         i = i + 1
-    return HttpResponse('aaaaa')
+    return HttpResponse('resolve done')
 
 
 def query_image(request):
@@ -64,18 +64,23 @@ def query_image(request):
         return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
     if p.is_film:
         nex = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__gt=order_str).first()
-        prev = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(order_id__lt=order_str).all().last()
+        prev = PhotoInfo.objects.all().order_by("order_id").filter(is_film=1).filter(
+            order_id__lt=order_str).all().last()
     else:
         if utils.is_number(year_str):
             if int(year_str) == -1:
                 nex = PhotoInfo.objects.all().order_by("order_id").filter(order_id__gt=order_str).first()
                 prev = PhotoInfo.objects.all().order_by("order_id").filter(order_id__lt=order_str).all().last()
             elif int(year_str) > Static.EARLIER_YEAR:
-                nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__gt=order_str).first()
-                prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(order_id__lt=order_str).all().last()
+                nex = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(
+                    order_id__gt=order_str).first()
+                prev = PhotoInfo.objects.filter(shooting_time__year=year_str).order_by("order_id").filter(
+                    order_id__lt=order_str).all().last()
             else:
-                nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__gt=order_str).first()
-                prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by("order_id").filter(order_id__lt=order_str).all().last()
+                nex = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by(
+                    "order_id").filter(order_id__gt=order_str).first()
+                prev = PhotoInfo.objects.filter(shooting_time__year__lte=Static.EARLIER_YEAR).order_by(
+                    "order_id").filter(order_id__lt=order_str).all().last()
         else:
             view_dict = {'code': 404, 'status': 'Year error'}
             return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
@@ -161,44 +166,66 @@ def reset(request):
     utils.clear_dir(Static.PATH_SORTED_THUMBNAIL_PHOTOS)
     utils.unsort_files(Static.PATH_SORTED_RAW_PHOTOS, Static.PATH_UNSORTED_PHOTOS)
     utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UNSORTED_FILMS)
-    return HttpResponse('bbbb')
+    return HttpResponse('reset done')
 
 
 def uploader(request):
+    # action有两种，upload和add_to_album
+    # upload是上传至缓冲区，add_to_album是添加至相册
     msg = ''
+    action = request.POST.get('action', -1)
     if request.method == 'POST':
-        is_film = request.POST.get('is_film', -1) == "True"
-        if 'file' in request.FILES:
-            uploaded_file = request.FILES['file']
-            fs = FileSystemStorage()
-            save_path = Static.PATH_UPLOADED
-            if is_film:
-                logger.info("Upload film photo")
-                save_path = Static.PATH_UPLOADED_FILMS
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
-            filename = fs.save(os.path.join(save_path, uploaded_file.name), uploaded_file)
+        if action == 'upload':
+            is_film = request.POST.get('is_film', -1) == "True"
+            if 'file' in request.FILES:
+                uploaded_file = request.FILES['file']
+                fs = FileSystemStorage()
+                save_path = Static.PATH_UPLOADED
+                if is_film:
+                    logger.info("Upload film photo")
+                    save_path = Static.PATH_UPLOADED_FILMS
+                if not os.path.exists(save_path):
+                    os.makedirs(save_path)
+                filepath = fs.save(os.path.join(save_path, uploaded_file.name), uploaded_file)
 
-            # 获取保存后的文件URL
-            file_url = fs.url(filename)
-            logger.info("File saved, url:", file_url)
-            msg = "上传成功!"
-        else:
-            msg = "未选择文件！"
+                # 获取保存后的文件URL
+                file_url = fs.url(filepath)
+                logger.info("File saved, url:", file_url)
+
+                #生产缩略图，文件存放在PATH_UPLOADED_TEMP，缩略图与原图同名
+                utils.make_show_image(filepath, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_TEMP, uploaded_file.name)
+                msg = "上传成功!"
+            else:
+                msg = "未选择文件！"
+        elif action == 'add_to_album':
+            amount = request.POST.get('amount', -1)
+            is_film = request.POST.get('is_film', -1) == "True"
+            if amount == 'one':
+                path = request.POST.get('path', -1)[1:]
+                logger.info('Add one photo: {}'.format(path))
+                add_one(path, is_film)
+                msg = '已添加一张'
+            elif amount == 'all':
+                logger.info('Add all photo')
+                add_all(Static.PATH_UPLOADED)
+                msg = '已添加全部'
     else:
         pass
+    logger.info("扫描UPLOADED文件夹")
     photo_list = []
     for sub_path in os.scandir(Static.PATH_UPLOADED):
-        if os.path.isfile(sub_path):
+        if utils.is_photo_file(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path))
-            model.resolving(False, False)
-            print(model.is_film)
+            model.resolving_digital(False, False)
+            base_name = os.path.splitext(sub_path.name)[0]
+            thumbnail_name = f"{base_name}.jpg"
+            model.thumbnail_path = os.path.relpath(os.path.join(Static.PATH_UPLOADED_TEMP, thumbnail_name))
+            logger.info(model.__dict__)
             photo_list.append(utils.photo_to_dict(model))
     for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS):
-        if os.path.isfile(sub_path):
+        if utils.is_photo_file(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path))
             model.resolving_film(False)
-            print(model.is_film)
             photo_list.append(utils.photo_to_dict(model))
     for p in photo_list:
         print(p)
@@ -220,6 +247,7 @@ def add_photo(request):
         else:
             logger.info('Add all photo')
             add_all(Static.PATH_UPLOADED)
+            add_all(Static.PATH_UPLOADED_FILMS, Static.KEY_FILM)
             msg = '已添加全部'
     html = ("<html><body>%s<br><br>"
             "<a href=\"/\">返回首页</a><br>"
@@ -229,22 +257,17 @@ def add_photo(request):
     return HttpResponse(html)
 
 
-def add_all(path, is_film=False):
-    if is_film:
-        for sub_path in os.scandir(path):
-            if os.path.isfile(sub_path):
-                model = PhotoInfo(path=os.path.relpath(sub_path))
-                model.resolving_film()
-    else:
-        for sub_path in os.scandir(path):
-            if os.path.isfile(sub_path):
-                model = PhotoInfo(path=os.path.relpath(sub_path))
-                model.resolving()
-        plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
-        i = 0
-        for p in plist:
-            p.set_order(i)
-            i = i + 1
+def add_all(path, film_or_digital=Static.KEY_DIGITAL):
+    for sub_path in os.scandir(path):
+        if utils.is_photo_file(sub_path):
+          model = PhotoInfo(path=os.path.relpath(sub_path))
+          model.resolving(True, film_or_digital)
+
+    plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
+    i = 0
+    for p in plist:
+        p.set_order(i)
+        i = i + 1
 
 
 def add_one(path, is_film=False):
@@ -253,15 +276,16 @@ def add_one(path, is_film=False):
         model.resolving_film()
     else:
         model = PhotoInfo(path=path)
-        model.resolving()
+        model.resolving_digital()
         plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
         i = 0
         for p in plist:
             p.set_order(i)
             i = i + 1
+    
 
-
-def modify(request):
+def action(request):
+    logger.info('Action request: %s', request.GET)
     msg = ''
     id_str = request.GET.get('id', -1)
     action = request.GET.get('act', -1)
@@ -280,7 +304,7 @@ def modify(request):
             if latitude != 'None' and longitude != 'None':
                 if utils.is_number(latitude):
                     if utils.is_number(longitude):
-                        p.set_position(latitude, longitude)
+                        p.set_position(longitude, latitude)
                         logger.info('Modify position, longitude=%s, latitude=%s' % (longitude, latitude))
                     else:
                         logger.error('longitude is not number!!')

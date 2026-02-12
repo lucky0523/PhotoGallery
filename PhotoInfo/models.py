@@ -30,6 +30,7 @@ class PhotoInfo(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     altitude = models.FloatField(null=True, blank=True)
+    country = models.CharField(max_length=100, default="", null=True, blank=True)
     province = models.CharField(max_length=100, default="", null=True, blank=True)
     city = models.CharField(max_length=100, default="", null=True, blank=True)
     district = models.CharField(max_length=100, default="", null=True, blank=True)
@@ -47,81 +48,98 @@ class PhotoInfo(models.Model):
         return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\nPath:{}\r\n' \
             .format(self.vendor, self.device, self.path)
 
-    def resolving(self, need_to_save_to_db=True, need_to_get_gps=True):
+    def resolving(self, need_to_save_to_db=True,film_or_digital=Static.KEY_DIGITAL,need_to_get_gps=True):
+        if film_or_digital == Static.KEY_FILM:
+            self.resolving_film(need_to_save_to_db)
+        elif film_or_digital == Static.KEY_DIGITAL:
+            self.resolving_digital(need_to_save_to_db, need_to_get_gps)
+
+    def resolving_digital(self, need_to_save_to_db=True, need_to_get_gps=True):
         logger.info('resolve photo: {}'.format(self.path))
         image_content = open(self.path, 'rb')
-        self.file_format = self.path.split('.')[-1]
+        base_name, file_format_with_dot = os.path.splitext(self.path)
+        self.file_format = file_format_with_dot[1:]
         logger.info('Handle image: ' + self.path)
         tags = exifread.process_file(image_content)
         image_content.close()
+        # logger.info('EXIF tags: ' + str(tags))
+
+        if 'Image Make' in tags:
+            self.vendor = tags['Image Make'].printable
+        #if 'EXIF Tag 0x9A00' in tags:
+        #    self.device = tags['EXIF Tag 0x9A00'].printable
+        if 'Image Model' in tags:
+            self.device = tags['Image Model'].printable
         if 'EXIF DateTimeOriginal' in tags:
             raw_time = tags['EXIF DateTimeOriginal'].printable.split(' ')
             raw_time[0] = raw_time[0].replace(':', '-')
             self.shooting_time = ' '.join(raw_time)
-            self.vendor = tags['Image Make'].printable
-            self.device = tags['Image Model'].printable
-            if 'EXIF ExposureTime' in tags:
-                self.expo_time = tags['EXIF ExposureTime'].printable
+        elif 'Image DateTime' in tags:
+            raw_time = tags['Image DateTime'].printable.split(' ')
+            raw_time[0] = raw_time[0].replace(':', '-')
+            self.shooting_time = ' '.join(raw_time)
+        if 'EXIF ExposureTime' in tags:
+            self.expo_time = tags['EXIF ExposureTime'].printable
+        else:
+            self.expo_time = -1
+        if 'EXIF ISOSpeedRatings' in tags:
+            self.iso = tags['EXIF ISOSpeedRatings'].printable
+        else:
+            self.iso = -1
+        if 'EXIF FNumber' in tags:
+            f_number_strs = tags['EXIF FNumber'].printable.split('/')
+            if f_number_strs.__len__() > 1:
+                self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
             else:
-                self.expo_time = -1
-            if 'EXIF ISOSpeedRatings' in tags:
-                self.iso = tags['EXIF ISOSpeedRatings'].printable
-            else:
-                self.iso = -1
-            if 'EXIF FNumber' in tags:
-                f_number_strs = tags['EXIF FNumber'].printable.split('/')
-                if f_number_strs.__len__() > 1:
-                    self.f_number = int(f_number_strs[0]) / int(f_number_strs[1])
+                self.f_number = float(f_number_strs[0])
+        else:
+            self.f_number = -1
+        if 'EXIF FocalLengthIn35mmFilm' in tags:
+            self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
+        elif 'EXIF FocalLength' in tags:
+            self.equivalent_focal_length = int(tags['EXIF FocalLength'].printable)
+        if 'EXIF ExifImageWidth' in tags and 'EXIF ExifImageLength' in tags:
+            self.width = int(tags['EXIF ExifImageWidth'].printable)
+            self.length = int(tags['EXIF ExifImageLength'].printable)
+
+        if need_to_get_gps:
+            try:
+                latitude_str = tags["GPS GPSLatitude"].printable[1:-1]
+                self.latitude = utils.sexagesimal2decimal(latitude_str)
+            except:
+                pass
+            try:
+                longitude_str = tags["GPS GPSLongitude"].printable[1:-1]
+                self.longitude = utils.sexagesimal2decimal(longitude_str)
+            except:
+                pass
+            try:
+                altitude_strs = tags["GPS GPSAltitude"].printable.split('/')
+                if altitude_strs.__len__() > 1:
+                    self.altitude = float(altitude_strs[0]) / float(altitude_strs[1])
                 else:
-                    self.f_number = float(f_number_strs[0])
-            else:
-                self.f_number = -1
-            if 'EXIF FocalLengthIn35mmFilm' in tags:
-                self.equivalent_focal_length = int(tags['EXIF FocalLengthIn35mmFilm'].printable)
-            elif 'EXIF FocalLength' in tags:
-                self.equivalent_focal_length = int(tags['EXIF FocalLength'].printable)
-            if 'EXIF ExifImageWidth' in tags and 'EXIF ExifImageLength' in tags:
-                self.width = int(tags['EXIF ExifImageWidth'].printable)
-                self.length = int(tags['EXIF ExifImageLength'].printable)
+                    self.altitude = float(altitude_strs[0])
+            except:
+                pass
+            if self.latitude is not None and self.longitude is not None:
+                self.country, self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
 
-            if need_to_get_gps:
-                try:
-                    latitude_str = tags["GPS GPSLatitude"].printable[1:-1]
-                    self.latitude = utils.sexagesimal2decimal(latitude_str)
-                except:
-                    pass
-                try:
-                    longitude_str = tags["GPS GPSLongitude"].printable[1:-1]
-                    self.longitude = utils.sexagesimal2decimal(longitude_str)
-                except:
-                    pass
-                try:
-                    altitude_strs = tags["GPS GPSAltitude"].printable.split('/')
-                    if altitude_strs.__len__() > 1:
-                        self.altitude = float(altitude_strs[0]) / float(altitude_strs[1])
-                    else:
-                        self.altitude = float(altitude_strs[0])
-                except:
-                    pass
-                if self.latitude is not None and self.longitude is not None:
-                    self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
+        self.formatted_name = '.'.join(
+            [self.vendor, self.device, self.shooting_time, self.file_format]) \
+            .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
+            .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
 
-            self.formatted_name = '.'.join(
-                [self.vendor, self.device, self.shooting_time, self.file_format]) \
-                .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
-                .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
-
-            if need_to_save_to_db:
-                date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
-                self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
-                                            self.formatted_name)
-                self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                                  Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
-                                                                  self.formatted_name)
-                self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                                       Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
-                                                       self.formatted_name)
-                self.save()
+        if need_to_save_to_db:
+            date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
+            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
+                                        self.formatted_name)
+            self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                                                                Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
+                                                                self.formatted_name)
+            self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                                    Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
+                                                    self.formatted_name)
+            self.save()
 
     def resolving_film(self, need_to_save_to_db=True):
         self.file_format = self.path.split('.')[-1]
@@ -147,7 +165,7 @@ class PhotoInfo(models.Model):
     def set_position(self, longitude, latitude):
         self.longitude = float(longitude)
         self.latitude = float(latitude)
-        self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
+        self.country, self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
         self.save()
 
     # 胶卷型号
@@ -160,4 +178,3 @@ class PhotoInfo(models.Model):
         tags = exifread.process_file(image_content)
         print(tags)
         print(int(tags['EXIF FocalLengthIn35mmFilm'].printable))
-        # print(utils.decode_address_from_gps(self.latitude, self.longitude))
