@@ -133,5 +133,6 @@ dmypy.json
 nohup.out
 .idea
 migrations
-/dynamic
+/data/dynamic
 .vscode
+/staticfiles

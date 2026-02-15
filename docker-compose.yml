@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    image: photo-gallery:uwsgi          # 别人 load 后就是这个名字
+    container_name: photo-gallery
+    restart: unless-stopped
+    ports:
+      - "80:8000"                     # 如果你的 uwsgi 监听 8080，就改成 "8000:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DJANGO_SETTINGS_MODULE=PhotoGallery.settings
+      # - DEBUG=False                   # 建议打开，生产环境关 debug
