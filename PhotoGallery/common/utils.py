@@ -87,7 +87,11 @@ def move_file(srcfile, dstpath, dstname=''):  # 移动文件函数，dstpath不�
 
 
 def open_and_rotate(src_file):
-    img = Image.open(src_file)
+    if src_file.is_file():
+        img = Image.open(src_file.path)
+    else:
+        logger.error("%s not exist!" % os.path.abspath(src_file))
+        return None
     try:
         exif = img._getexif()
     except AttributeError:

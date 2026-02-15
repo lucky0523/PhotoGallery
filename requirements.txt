@@ -1,5 +1,5 @@
-Django==4.2.6
+Django==6.0.2
 ExifRead==3.5.1
-Pillow==10.1.0
+Pillow==12.1.1
 Requests==2.31.0
-pillow_heif==0.14.0
+pillow-heif==1.2.0
