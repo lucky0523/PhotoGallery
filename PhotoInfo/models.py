@@ -131,15 +131,23 @@ class PhotoInfo(models.Model):
 
         if need_to_save_to_db:
             date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
-            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
-                                        self.formatted_name)
-            self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                                Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
-                                                                self.formatted_name)
-            self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                                    Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
-                                                    self.formatted_name)
+            # 先保存数据库，再移动文件；否则若保存失败，文件又被移动，不好处理
             self.save()
+            try:
+                self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
+                                            self.formatted_name)
+
+                self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                                                                    Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
+                                                                    self.formatted_name)
+                self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                                        Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
+                                                        self.formatted_name)
+                self.save()
+            except Exception as e:
+                logging.error(f"Error moving file: {e}")
+                # 若移动文件失败，删除数据库记录
+                self.delete()
 
     def resolving_film(self, need_to_save_to_db=True):
         self.file_format = self.path.split('.')[-1]

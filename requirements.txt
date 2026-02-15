@@ -2,3 +2,4 @@ Django==4.2.6
 ExifRead==3.5.1
 Pillow==10.1.0
 Requests==2.31.0
+pillow_heif==0.14.0

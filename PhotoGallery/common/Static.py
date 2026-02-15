@@ -39,6 +39,8 @@ DEVICES_DICT = {
     'FC220': 'Dji Mavic Pro',
 }
 
+PIC_EXTS = ('.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.raw', '.cr2', '.nef', '.arw', '.heic')
+
 
 def ensure_path_directories_exist():
     """

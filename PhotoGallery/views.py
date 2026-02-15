@@ -15,7 +15,7 @@ LOG_TAG = '[PhotoGallery.views] '
 logging.basicConfig(level=Static.LOG_LEVEL, force=True, format='%(asctime)s - %(name)s %(levelname)s - %(message)s')
 logger = logging.getLogger(LOG_TAG)
 
-
+# interface
 def nav(request):
     dlist = []
     if not os.path.exists(Static.PATH_SORTED_SHOW_PHOTOS):
@@ -36,7 +36,7 @@ def nav(request):
         dlist.sort(reverse=True)
         return render(request, 'navigation.html', context)
 
-
+# interface
 def resolving(request):
     for sub_path in os.scandir(Static.PATH_UNSORTED_PHOTOS):
         if utils.is_photo_file(sub_path):
@@ -54,7 +54,7 @@ def resolving(request):
         i = i + 1
     return HttpResponse('resolve done')
 
-
+# internal interface
 def query_image(request):
     order_str = request.GET.get('order', -1)
     year_str = request.GET.get('year', -1)
@@ -100,7 +100,7 @@ def query_image(request):
     logger.info('Query one image: ' + str(view_dict))
     return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
-
+# internal interface
 def query_list(request):
     homepage = request.GET.get('homepage', 0)
     year = request.GET.get('year', 1)
@@ -130,11 +130,11 @@ def query_list(request):
     else:
         return render(request, 'gallery.html', context)
 
-
+# interface
 def img_viewer(request):
     return render(request, 'image_viewer.html')
 
-
+# interface
 def editor(request):
     msg = ''
     id_str = request.GET.get('id', -1)
@@ -145,7 +145,7 @@ def editor(request):
     context = {'msg': msg, 'photos': photo_list}
     return render(request, 'editor.html', context)
 
-
+# interface
 def get_all_films(request):
     plist = PhotoInfo.objects.filter(is_film=1)
     l = []
@@ -157,7 +157,7 @@ def get_all_films(request):
         l.append(f)
     return HttpResponse(json.dumps(l, sort_keys=True, indent=4, separators=(',', ': ')))
 
-
+# test interface
 def reset(request):
     plist = PhotoInfo.objects.all()
     for p in plist:
@@ -168,7 +168,7 @@ def reset(request):
     utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UNSORTED_FILMS)
     return HttpResponse('reset done')
 
-
+# interface
 def uploader(request):
     # action有两种，upload和add_to_album
     # upload是上传至缓冲区，add_to_album是添加至相册
@@ -192,8 +192,6 @@ def uploader(request):
                 file_url = fs.url(filepath)
                 logger.info("File saved, url:", file_url)
 
-                #生产缩略图，文件存放在PATH_UPLOADED_TEMP，缩略图与原图同名
-                utils.make_show_image(filepath, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_TEMP, uploaded_file.name)
                 msg = "上传成功!"
             else:
                 msg = "未选择文件！"
@@ -219,7 +217,14 @@ def uploader(request):
             model.resolving_digital(False, False)
             base_name = os.path.splitext(sub_path.name)[0]
             thumbnail_name = f"{base_name}.jpg"
-            model.thumbnail_path = os.path.relpath(os.path.join(Static.PATH_UPLOADED_TEMP, thumbnail_name))
+            thumbnail_path = os.path.relpath(os.path.join(Static.PATH_UPLOADED_TEMP, thumbnail_name))
+            if not utils.is_photo_file(thumbnail_path):
+                #生产缩略图，文件存放在PATH_UPLOADED_TEMP，缩略图与原图同名
+                logger.info("Thumbnail not exist, make it: {}".format(sub_path.name))
+                utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_TEMP, sub_path.name)
+            else:
+                logger.info("Thumbnail exist: {}".format(thumbnail_path))
+            model.thumbnail_path = thumbnail_path
             logger.info(model.__dict__)
             photo_list.append(utils.photo_to_dict(model))
     for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS):
@@ -227,12 +232,13 @@ def uploader(request):
             model = PhotoInfo(path=os.path.relpath(sub_path))
             model.resolving_film(False)
             photo_list.append(utils.photo_to_dict(model))
-    for p in photo_list:
-        print(p)
+
+    utils.clean_uploaded_temp()
+
     context = {'msg': msg, 'photos': photo_list}
     return render(request, 'uploader.html', context)
 
-
+# internal interface
 def add_photo(request):
     msg = ''
     if request.method == 'POST':
@@ -283,7 +289,7 @@ def add_one(path, is_film=False):
             p.set_order(i)
             i = i + 1
     
-
+# interface
 def action(request):
     logger.info('Action request: %s', request.GET)
     msg = ''
@@ -324,10 +330,10 @@ def action(request):
             "</body></html>") % msg
     return HttpResponse(html)
 
-
+# interface
 def wx_verify(request):
     return HttpResponse('15496962470248715457')
 
-
+# test interface
 def position_picker(request):
     return render(request, 'map_position_picker.html', {'message': "Hello World!"})

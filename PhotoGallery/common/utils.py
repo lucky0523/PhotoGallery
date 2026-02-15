@@ -119,10 +119,9 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
         os.makedirs(dstpath)
-    #dstname的后缀如果不是jpg，就改成jpg
-    if not dstname.endswith('.jpg'):
-        base_name, ext = os.path.splitext(dstname)
-        dstname = base_name + '.jpg'
+    #缩略图后缀统一改成jpg
+    base_name, ext = os.path.splitext(dstname)
+    dstname = base_name + '.jpg'
 
     img = open_and_rotate(src_file)
     width, height = img.size
@@ -145,10 +144,10 @@ def make_show_image(src_file, max_side, dstpath, dstname):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
         os.makedirs(dstpath)
-    #dstname的后缀如果不是jpg，就改成jpg
-    if not dstname.endswith('.jpg'):
-        base_name, ext = os.path.splitext(dstname)
-        dstname = base_name + '.jpg'
+    #缩略图后缀统一改成jpg
+    base_name, ext = os.path.splitext(dstname)
+    dstname = base_name + '.jpg'
+
     img = open_and_rotate(src_file)
     width, height = img.size
     if max(max_side, width, height) == max_side:
@@ -298,4 +297,35 @@ def reset_photo(photo):
     photo.delete()
 
 def is_photo_file(file_name):
-    return os.path.isfile(file_name) and file_name.name.lower().endswith(('.jpg', 'jpeg', 'png', 'bmp', 'heic'))
+    if hasattr(file_name, 'name'):
+        name = file_name.name
+    else:
+        name = os.path.basename(file_name)
+    return os.path.isfile(file_name) and name.lower().endswith(Static.PIC_EXTS)
+
+def clean_uploaded_temp():
+    """
+    清理 PATH_UPLOADED_TEMP 文件夹中多余的缩略图文件。
+    如果在 PATH_UPLOADED 和 PATH_UPLOADED_FILMS 中找不到同名的源文件，则删除该缩略图。
+    """
+    if not os.path.exists(Static.PATH_UPLOADED_TEMP):
+        logger.info("上传临时缩略图目录不存在，跳过清理")
+        return
+
+    for thumb in os.scandir(Static.PATH_UPLOADED_TEMP):
+        if thumb.is_file() and thumb.name.lower().endswith('.jpg'):
+            base_name = os.path.splitext(thumb.name)[0]
+            # 构造可能的源文件名（支持常见原图扩展名）
+            source_found = False
+            for ext in Static.PIC_EXTS:
+                source_file = base_name + ext
+                if (os.path.isfile(os.path.join(Static.PATH_UPLOADED, source_file)) or
+                        os.path.isfile(os.path.join(Static.PATH_UPLOADED_FILMS, source_file))):
+                    source_found = True
+                    break
+            if not source_found:
+                try:
+                    os.remove(thumb.path)
+                    logger.info("删除多余缩略图: %s", thumb.name)
+                except Exception as e:
+                    logger.error("删除缩略图失败 %s: %s", thumb.name, e)
