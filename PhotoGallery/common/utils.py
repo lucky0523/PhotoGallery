@@ -69,29 +69,55 @@ def photo_to_dict(photo):
     return view_dict
 
 
-def move_file(srcfile, dstpath, dstname=''):  # 移动文件函数，dstpath不可以加文件名
-    if not dstpath.endswith('/'):
-        dstpath = dstpath + '/'
+def move_file(srcfile, dstpath, dstname=''):  # 移动文件函数，dstpath可以是文件夹或完整文件路径
     if not os.path.isfile(srcfile):
         logger.error("%s not exist!" % os.path.abspath(srcfile))
         return None
+    
+    spath, sname = os.path.split(srcfile)
+    if dstname is not None and dstname != '':
+        sname = dstname
+    
+    is_directory = False
+    if os.path.exists(dstpath) and os.path.isdir(dstpath):
+        is_directory = True
+    elif dstpath.endswith('/') or dstpath.endswith('\\'):
+        is_directory = True
     else:
+        dirname, basename = os.path.split(dstpath)
+        if '.' in basename:
+            is_directory = False
+        else:
+            is_directory = True
+    
+    if is_directory:
+        if not dstpath.endswith('/') and not dstpath.endswith('\\'):
+            dstpath = dstpath + '/'
         if not os.path.exists(dstpath):
             os.makedirs(dstpath)
-        spath, sname = os.path.split(srcfile)  # 分离文件名和路径
-        if dstname is not None and dstname != '':  # 填了文件名的情况
-            sname = dstname
-        shutil.move(srcfile, dstpath + sname)  # 移动文件
-        logger.info("Move %s -> %s" % (srcfile, dstpath + sname))
-        return dstpath + sname
+        target_path = dstpath + sname
+    else:
+        target_dir = os.path.dirname(dstpath)
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        target_path = dstpath
+    
+    shutil.move(srcfile, target_path)
+    logger.info("Move %s -> %s" % (srcfile, target_path))
+    return target_path
 
 
 def open_and_rotate(src_file):
-    if src_file.is_file():
+    if hasattr(src_file, 'is_file'):
+        if not src_file.is_file():
+            logger.error("%s not exist!" % src_file.path)
+            return None
         img = Image.open(src_file.path)
     else:
-        logger.error("%s not exist!" % os.path.abspath(src_file))
-        return None
+        if not os.path.isfile(src_file):
+            logger.error("%s not exist!" % os.path.abspath(src_file))
+            return None
+        img = Image.open(src_file)
     try:
         exif = img._getexif()
     except AttributeError:

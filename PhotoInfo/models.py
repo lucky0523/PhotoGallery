@@ -56,11 +56,11 @@ class PhotoInfo(models.Model):
             self.resolving_digital(need_to_save_to_db, need_to_get_gps)
 
     def resolving_digital(self, need_to_save_to_db=True, need_to_get_gps=True):
-        logger.info('resolve photo: {}'.format(self.path))
-        image_content = open(self.path, 'rb')
-        base_name, file_format_with_dot = os.path.splitext(self.path)
+        raw_path = self.path
+        logger.info('Process photo: {}'.format(raw_path))
+        image_content = open(raw_path, 'rb')
+        base_name, file_format_with_dot = os.path.splitext(raw_path)
         self.file_format = file_format_with_dot[1:]
-        logger.info('Handle image: ' + self.path)
         tags = exifread.process_file(image_content)
         image_content.close()
         # logger.info('EXIF tags: ' + str(tags))
@@ -138,8 +138,8 @@ class PhotoInfo(models.Model):
                 .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
                 .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
         else:
-            #formatted_name使用原文件名
-            self.formatted_name = self.path.split('/')[-1]
+            #exif信息不完整时，formatted_name使用原文件名
+            self.formatted_name = raw_path.split('/')[-1]
             logger.warning(f'Exif info not complete, use original filename instead: {self.formatted_name}')
 
         if need_to_save_to_db:
@@ -147,7 +147,7 @@ class PhotoInfo(models.Model):
             # 先保存数据库，再移动文件；否则若保存失败，文件又被移动，不好处理
             self.save()
             try:
-                self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
+                self.path = utils.move_file(raw_path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
                                             self.formatted_name)
 
                 self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
@@ -158,8 +158,13 @@ class PhotoInfo(models.Model):
                                                         self.formatted_name)
                 self.save()
             except Exception as e:
-                logging.error(f"Error moving file: {e}")
-                # 若移动文件失败，删除数据库记录
+                logging.error(f"Error moving file: {e}, move to raw path: {raw_path}")
+                # 若移动文件失败，删除数据库记录，文件也会被移动到原始位置，缩略图和显示图也会被删除
+                self.path = utils.move_file(self.path, raw_path)
+                if os.path.isfile(self.thumbnail_path):
+                    os.remove(self.thumbnail_path)
+                if os.path.isfile(self.show_path):
+                    os.remove(self.show_path)
                 self.delete()
 
     def resolving_film(self, need_to_save_to_db=True):
