@@ -16,6 +16,7 @@ Including another URLconf
 from django.urls import path, re_path
 from django.views.static import serve
 from django.conf import settings
+from django.conf.urls.static import static
 
 from PhotoGallery import views
 
@@ -33,6 +34,7 @@ urlpatterns = [
     path('action', views.action),
     path('get_all_films', views.get_all_films),
     path('tencent9176013635572033544.txt/', views.wx_verify),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path('dynamic/photos/sorted/show/(?P<path>.*)', serve, {'document_root': settings.SHOW_IMAGE_ROOT}),
     re_path('dynamic/photos/sorted/thumbnail/(?P<path>.*)', serve, {'document_root': settings.THUMBNAIL_IMAGE_ROOT}),
     re_path('dynamic/uploaded/(?P<path>.*)', serve, {'document_root': settings.UPLOADED_IMAGE_ROOT}),
@@ -41,3 +43,5 @@ urlpatterns = [
     path('posi_picker', views.position_picker),
 
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

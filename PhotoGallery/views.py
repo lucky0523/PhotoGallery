@@ -3,6 +3,7 @@ import logging
 import os
 import random
 
+from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -177,14 +178,19 @@ def uploader(request):
             file_mtime = request.POST.get('file_mtime', None)
             if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
-                fs = FileSystemStorage()
                 save_path = Static.PATH_UPLOADED
                 if is_film:
                     logger.info("Upload film photo")
                     save_path = Static.PATH_UPLOADED_FILMS
                 if not os.path.exists(save_path):
-                    os.makedirs(save_path)
-                filepath = fs.save(os.path.join(save_path, uploaded_file.name), uploaded_file)
+                    os.makedirs(save_path, exist_ok=True)
+                
+                safe_filename = os.path.basename(uploaded_file.name)
+                filepath = os.path.join(save_path, safe_filename)
+                
+                with open(filepath, 'wb+') as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
 
                 # 恢复文件的最后修改时间
                 if file_mtime:
@@ -196,7 +202,7 @@ def uploader(request):
                         logger.error(f"Failed to set file mtime: {e}")
 
                 # 获取保存后的文件URL
-                file_url = fs.url(filepath)
+                file_url = os.path.join('/media', os.path.relpath(filepath, settings.MEDIA_ROOT))
                 logger.info("File saved, url:", file_url)
 
                 msg = "上传成功!"

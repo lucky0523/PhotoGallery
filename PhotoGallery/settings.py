@@ -125,10 +125,13 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-SHOW_IMAGE_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "photos", "sorted", "show")
-THUMBNAIL_IMAGE_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "photos", "sorted", "thumbnail")
-UPLOADED_IMAGE_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "uploaded")
-UPLOADED_FILMS_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "uploaded_films")
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data', 'dynamic')
+
+SHOW_IMAGE_ROOT = os.path.join(MEDIA_ROOT, "photos", "sorted", "show")
+THUMBNAIL_IMAGE_ROOT = os.path.join(MEDIA_ROOT, "photos", "sorted", "thumbnail")
+UPLOADED_IMAGE_ROOT = os.path.join(MEDIA_ROOT, "uploaded")
+UPLOADED_FILMS_ROOT = os.path.join(MEDIA_ROOT, "uploaded_films")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
