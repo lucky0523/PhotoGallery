@@ -7,19 +7,19 @@
 <body>
 {% include 'backend_header.html' %}
 
-<div id="msg_block">{{ msg }}</div>
+{% if msg %}
+<div id="msg_block" style="background-color: #fff3cd; padding: 12px 16px; border-radius: 4px; border: 1px solid #ffc107; color: #856404; margin-bottom: 16px;">{{ msg }}</div>
+{% endif %}
 <form action="/uploader" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="action" value="upload">
     <p><input type="file" name="file" accept="image/*"></p>
     <label><input type="radio" name="is_film" value="False" checked>数码
         <input type="radio" name="is_film" value="True">胶片</label>
-    <input type="submit" value='上传至缓冲区'>
+    <button type="submit" name="action" value="upload_to_buffer">上传至缓冲区</button>
 </form>
 <br>
 <form action="/uploader" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="action" value="add_to_album">
     <input type="hidden" name="amount" value="all">
-    <input type="submit" value='全部添加至相册'>
+    <button type="submit" name="action" value="add_to_album">全部添加至相册</button>
 </form>
 <br>
 {% for item in photos %}
@@ -36,12 +36,13 @@
             {% endif %}
             <form style="margin-left: 10px;" action="/uploader" method="post">
                 <label>
-                    <input type="hidden" name="action" value="add_to_album">
                     <input type="hidden" name="amount" value="one">
                     <input type="hidden" name="is_film" value="{{ item.is_film }}">
                     <input onfocus=this.blur() type="text" name="path" size="50" value="{{ item.image }}">
                 </label>
-                <input type="submit" value='添加一张至相册'>
+                <button type="submit" name="action" value="add_to_album">添加一张至相册</button>
+                <br>
+                <button type="submit" name="action" value="remove_from_buffer">在缓冲区中删除</button>
             </form>
         </div>
     </div>

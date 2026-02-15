@@ -19,7 +19,8 @@ class PhotoInfo(models.Model):
     thumbnail_path = models.TextField(default="", null=True, blank=True)
     show_path = models.TextField(default="", null=True, blank=True)
     vendor = models.CharField(max_length=100, default="", null=True, blank=True)
-    device = models.CharField(max_length=100, default="", null=True, blank=True)
+    device = models.CharField(max_length=100, default="", null=True, blank=True) # 设备认证名
+    device_name = models.CharField(max_length=100, default="", null=True, blank=True) # 设备宣传名
     shooting_time = models.DateTimeField(null=True, blank=True)
     expo_time = models.CharField(max_length=100, default="", null=True, blank=True)
     iso = models.CharField(max_length=100, default="", null=True, blank=True)
@@ -66,10 +67,12 @@ class PhotoInfo(models.Model):
 
         if 'Image Make' in tags:
             self.vendor = tags['Image Make'].printable
-        #if 'EXIF Tag 0x9A00' in tags:
-        #    self.device = tags['EXIF Tag 0x9A00'].printable
         if 'Image Model' in tags:
             self.device = tags['Image Model'].printable
+        if 'EXIF Tag 0x9A00' in tags:
+            self.device_name = tags['EXIF Tag 0x9A00'].printable
+        
+        # 先尝试DateTimeOriginal，若不存在则尝试Image DateTime，若都不存在则使用文件修改时间
         if 'EXIF DateTimeOriginal' in tags:
             raw_time = tags['EXIF DateTimeOriginal'].printable.split(' ')
             raw_time[0] = raw_time[0].replace(':', '-')
@@ -78,6 +81,11 @@ class PhotoInfo(models.Model):
             raw_time = tags['Image DateTime'].printable.split(' ')
             raw_time[0] = raw_time[0].replace(':', '-')
             self.shooting_time = ' '.join(raw_time)
+        else:
+            file_mtime = os.path.getmtime(self.path)
+            self.shooting_time = datetime.fromtimestamp(file_mtime).strftime('%Y-%m-%d %H:%M:%S')
+            logger.warning(f'No shooting time found in EXIF tags: {tags}, use file modify time instead: {self.shooting_time}')
+        
         if 'EXIF ExposureTime' in tags:
             self.expo_time = tags['EXIF ExposureTime'].printable
         else:
@@ -124,10 +132,15 @@ class PhotoInfo(models.Model):
             if self.latitude is not None and self.longitude is not None:
                 self.country, self.province, self.city, self.district = utils.decode_address_from_gps(self.latitude, self.longitude)
 
-        self.formatted_name = '.'.join(
-            [self.vendor, self.device, self.shooting_time, self.file_format]) \
-            .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
-            .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
+        if self.vendor !='' and self.device !='':
+            self.formatted_name = '.'.join(
+                [self.vendor, self.device, self.shooting_time, self.file_format]) \
+                .replace('-', '').replace(':', '').replace(' ', '').replace('*', '').replace('\\', '') \
+                .replace('/', '').replace('?', '').replace('"', '').replace('<', '').replace('>', '').replace('|', '')
+        else:
+            #formatted_name使用原文件名
+            self.formatted_name = self.path.split('/')[-1]
+            logger.warning(f'Exif info not complete, use original filename instead: {self.formatted_name}')
 
         if need_to_save_to_db:
             date = datetime.strptime(self.shooting_time, "%Y-%m-%d %H:%M:%S")
@@ -181,6 +194,7 @@ class PhotoInfo(models.Model):
         self.film_model = model
         self.save()
 
+    # test
     def read_exif(self):
         image_content = open(self.path, 'rb')
         tags = exifread.process_file(image_content)

@@ -35,16 +35,13 @@ def is_number(s):
 def photo_to_dict(photo):
     if photo.show_path is None or photo.show_path == '':
         # 上传页面生成预览图片的信息时走这里
-        view_dict = {'image': "/" + photo.path,
+        view_dict = {'image': photo.path,
                      'file_model': photo.film_model,
                      'is_film': photo.is_film,
                      'formatted_name': photo.formatted_name,
                      'time': photo.shooting_time,
                      'thumbnail': photo.thumbnail_path}
-        if photo.device in Static.DEVICES_DICT:
-            view_dict['device'] = Static.DEVICES_DICT[photo.device]
-        else:
-            view_dict['device'] = photo.device
+        view_dict['device'] = get_device_name(photo)
     elif photo.is_film:
         view_dict = {'id': photo.id,
                      'order': photo.order_id,
@@ -68,10 +65,7 @@ def photo_to_dict(photo):
                      'longitude': photo.longitude,
                      'latitude': photo.latitude,
                      'time': photo.shooting_time.strftime("%Y-%m-%d %H:%M:%S")}
-        if photo.device in Static.DEVICES_DICT:
-            view_dict['device'] = Static.DEVICES_DICT[photo.device]
-        else:
-            view_dict['device'] = photo.device
+        view_dict['device'] = get_device_name(photo)
     return view_dict
 
 
@@ -121,7 +115,7 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
         os.makedirs(dstpath)
     #缩略图后缀统一改成jpg
     base_name, ext = os.path.splitext(dstname)
-    dstname = base_name + '.jpg'
+    dstname = base_name + Static.SUFFIX_THUMBNAIL
 
     img = open_and_rotate(src_file)
     width, height = img.size
@@ -146,7 +140,7 @@ def make_show_image(src_file, max_side, dstpath, dstname):
         os.makedirs(dstpath)
     #缩略图后缀统一改成jpg
     base_name, ext = os.path.splitext(dstname)
-    dstname = base_name + '.jpg'
+    dstname = base_name + Static.SUFFIX_THUMBNAIL
 
     img = open_and_rotate(src_file)
     width, height = img.size
@@ -313,7 +307,7 @@ def clean_uploaded_temp():
         return
 
     for thumb in os.scandir(Static.PATH_UPLOADED_TEMP):
-        if thumb.is_file() and thumb.name.lower().endswith('.jpg'):
+        if thumb.is_file() and thumb.name.lower().endswith(Static.SUFFIX_THUMBNAIL):
             base_name = os.path.splitext(thumb.name)[0]
             # 构造可能的源文件名（支持常见原图扩展名）
             source_found = False
@@ -329,3 +323,11 @@ def clean_uploaded_temp():
                     logger.info("删除多余缩略图: %s", thumb.name)
                 except Exception as e:
                     logger.error("删除缩略图失败 %s: %s", thumb.name, e)
+
+def get_device_name(p):
+    if p.device_name != '':
+        return p.device_name
+    elif p.device in Static.DEVICES_DICT:
+        return Static.DEVICES_DICT[p.device]
+    else:
+        return p.device

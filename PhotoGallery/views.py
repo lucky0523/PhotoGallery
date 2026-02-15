@@ -89,10 +89,7 @@ def query_image(request):
     view_dict['code'] = 200
     view_dict['next'] = -1
     view_dict['prev'] = -1
-    if p.device in Static.DEVICES_DICT:
-        view_dict['device'] = Static.DEVICES_DICT[p.device]
-    else:
-        view_dict['device'] = p.device
+    view_dict['device'] = utils.get_device_name(p)
     if nex is not None:
         view_dict['next'] = nex.order_id
     if prev is not None:
@@ -175,7 +172,7 @@ def uploader(request):
     msg = ''
     action = request.POST.get('action', -1)
     if request.method == 'POST':
-        if action == 'upload':
+        if action == 'upload_to_buffer':
             is_film = request.POST.get('is_film', -1) == "True"
             if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
@@ -199,7 +196,7 @@ def uploader(request):
             amount = request.POST.get('amount', -1)
             is_film = request.POST.get('is_film', -1) == "True"
             if amount == 'one':
-                path = request.POST.get('path', -1)[1:]
+                path = request.POST.get('path', -1)
                 logger.info('Add one photo: {}'.format(path))
                 add_one(path, is_film)
                 msg = '已添加一张'
@@ -207,6 +204,12 @@ def uploader(request):
                 logger.info('Add all photo')
                 add_all(Static.PATH_UPLOADED)
                 msg = '已添加全部'
+        elif action == 'remove_from_buffer':
+            path = request.POST.get('path', -1)
+            logger.info('Remove one photo: {}'.format(path))
+            if os.path.exists(path):
+                os.remove(path)
+            msg = '已移除: '+str(path)
     else:
         pass
     logger.info("扫描UPLOADED文件夹")
@@ -216,16 +219,16 @@ def uploader(request):
             model = PhotoInfo(path=os.path.relpath(sub_path))
             model.resolving_digital(False, False)
             base_name = os.path.splitext(sub_path.name)[0]
-            thumbnail_name = f"{base_name}.jpg"
+            thumbnail_name = f"{base_name}{Static.SUFFIX_THUMBNAIL}"
             thumbnail_path = os.path.relpath(os.path.join(Static.PATH_UPLOADED_TEMP, thumbnail_name))
             if not utils.is_photo_file(thumbnail_path):
                 #生产缩略图，文件存放在PATH_UPLOADED_TEMP，缩略图与原图同名
                 logger.info("Thumbnail not exist, make it: {}".format(sub_path.name))
-                utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_TEMP, sub_path.name)
+                model.thumbnail_path = utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_TEMP, sub_path.name)
             else:
                 logger.info("Thumbnail exist: {}".format(thumbnail_path))
-            model.thumbnail_path = thumbnail_path
-            logger.info(model.__dict__)
+                model.thumbnail_path = thumbnail_path
+            logger.info('Show a cached photo: {}'.format(model.__dict__))
             photo_list.append(utils.photo_to_dict(model))
     for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS):
         if utils.is_photo_file(sub_path):

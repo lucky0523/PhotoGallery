@@ -134,3 +134,4 @@ nohup.out
 .idea
 migrations
 /dynamic
+.vscode
