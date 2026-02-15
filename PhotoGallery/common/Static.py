@@ -1,5 +1,8 @@
 import logging
 import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 LANGUAGE = 'zh'
 
@@ -8,15 +11,15 @@ LOG_LEVEL = logging.INFO
 KEY_API_VERSION = 'api_version'
 API_VERSION = '0.1'
 
-PATH_UNSORTED_PHOTOS = './data/dynamic/photos/unsorted/'
-PATH_SORTED_RAW_PHOTOS = './data/dynamic/photos/sorted/raw/'
-PATH_SORTED_SHOW_PHOTOS = './data/dynamic/photos/sorted/show/'
-PATH_SORTED_THUMBNAIL_PHOTOS = './data/dynamic/photos/sorted/thumbnail/'
-PATH_UNSORTED_FILMS = './data/dynamic/photos/unsorted_films/'
-PATH_SORTED_RAW_FILMS = './data/dynamic/photos/sorted/raw_films/'
-PATH_UPLOADED = "./data/dynamic/uploaded/"
-PATH_UPLOADED_TEMP = "./data/dynamic/uploaded/temp"
-PATH_UPLOADED_FILMS = "./data/dynamic/uploaded/films/"
+PATH_UNSORTED_PHOTOS = str(BASE_DIR / 'data' / 'dynamic' / 'photos' / 'unsorted') + '/'
+PATH_SORTED_RAW_PHOTOS = str(BASE_DIR / 'data' / 'dynamic' / 'photos' / 'sorted' / 'raw') + '/'
+PATH_SORTED_SHOW_PHOTOS = str(BASE_DIR / 'data' / 'dynamic' / 'photos' / 'sorted' / 'show') + '/'
+PATH_SORTED_THUMBNAIL_PHOTOS = str(BASE_DIR / 'data' / 'dynamic' / 'photos' / 'sorted' / 'thumbnail') + '/'
+PATH_UNSORTED_FILMS = str(BASE_DIR / 'data' / 'dynamic' / 'photos' / 'unsorted_films') + '/'
+PATH_SORTED_RAW_FILMS = str(BASE_DIR / 'data' / 'dynamic' / 'photos' / 'sorted' / 'raw_films') + '/'
+PATH_UPLOADED = str(BASE_DIR / 'data' / 'dynamic' / 'uploaded') + '/'
+PATH_UPLOADED_TEMP = str(BASE_DIR / 'data' / 'dynamic' / 'uploaded' / 'temp') + '/'
+PATH_UPLOADED_FILMS = str(BASE_DIR / 'data' / 'dynamic' / 'uploaded' / 'films') + '/'
 
 SIZE_THUMBNAIL = 500
 SIZE_SHOW_MAX_SIDE = 2400

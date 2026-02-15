@@ -49,6 +49,11 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # 复制项目文件，并设置权限
 COPY --chown=appuser:appuser . .
 
+# 确保数据目录存在并设置权限
+USER root
+RUN mkdir -p /app/data \
+    && chown -R appuser:appuser /app/data
+
 # 切换到非 root 用户
 USER appuser
 

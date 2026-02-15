@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'PhotoGallery.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'data/db.sqlite3',
+        'NAME': BASE_DIR / 'data' / 'db.sqlite3',
     }
 }
 
@@ -125,10 +125,10 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-SHOW_IMAGE_ROOT = os.path.join(BASE_DIR, "data/dynamic//photos/sorted/show")
-THUMBNAIL_IMAGE_ROOT = os.path.join(BASE_DIR, "data/dynamic//photos/sorted/thumbnail")
-UPLOADED_IMAGE_ROOT = os.path.join(BASE_DIR, "data/dynamic//uploaded")
-UPLOADED_FILMS_ROOT = os.path.join(BASE_DIR, "data/dynamic//uploaded_films")
+SHOW_IMAGE_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "photos", "sorted", "show")
+THUMBNAIL_IMAGE_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "photos", "sorted", "thumbnail")
+UPLOADED_IMAGE_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "uploaded")
+UPLOADED_FILMS_ROOT = os.path.join(BASE_DIR, "data", "dynamic", "uploaded_films")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
