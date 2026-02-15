@@ -45,15 +45,15 @@ def photo_to_dict(photo):
     elif photo.is_film:
         view_dict = {'id': photo.id,
                      'order': photo.order_id,
-                     'image': photo.show_path[1:],
-                     'thumbnail': photo.thumbnail_path[1:],
+                     'image': photo.show_path,
+                     'thumbnail': photo.thumbnail_path,
                      'is_film': photo.is_film,
                      'file_model': photo.film_model}
     else:
         view_dict = {'id': photo.id,
                      'order': photo.order_id,
-                     'image': photo.show_path[1:],
-                     'thumbnail': photo.thumbnail_path[1:],
+                     'image': photo.show_path,
+                     'thumbnail': photo.thumbnail_path,
                      'formatted_name': photo.formatted_name,
                      'is_film': photo.is_film,
                      'iso': photo.iso,
