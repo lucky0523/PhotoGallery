@@ -174,6 +174,7 @@ def uploader(request):
     if request.method == 'POST':
         if action == 'upload_to_buffer':
             is_film = request.POST.get('is_film', -1) == "True"
+            file_mtime = request.POST.get('file_mtime', None)
             if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
                 fs = FileSystemStorage()
@@ -184,6 +185,15 @@ def uploader(request):
                 if not os.path.exists(save_path):
                     os.makedirs(save_path)
                 filepath = fs.save(os.path.join(save_path, uploaded_file.name), uploaded_file)
+
+                # 恢复文件的最后修改时间
+                if file_mtime:
+                    try:
+                        mtime = int(file_mtime) / 1000.0
+                        os.utime(filepath, (mtime, mtime))
+                        logger.info(f"Restored file mtime: {filepath} -> {file_mtime}")
+                    except Exception as e:
+                        logger.error(f"Failed to set file mtime: {e}")
 
                 # 获取保存后的文件URL
                 file_url = fs.url(filepath)

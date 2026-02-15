@@ -10,12 +10,21 @@
 {% if msg %}
 <div id="msg_block" style="background-color: #fff3cd; padding: 12px 16px; border-radius: 4px; border: 1px solid #ffc107; color: #856404; margin-bottom: 16px;">{{ msg }}</div>
 {% endif %}
-<form action="/uploader" method="post" enctype="multipart/form-data">
-    <p><input type="file" name="file" accept="image/*"></p>
+<form action="/uploader" method="post" enctype="multipart/form-data" id="upload_form">
+    <p><input type="file" name="file" accept="image/*" id="file_input"></p>
+    <input type="hidden" name="file_mtime" id="file_mtime">
     <label><input type="radio" name="is_film" value="False" checked>数码
         <input type="radio" name="is_film" value="True">胶片</label>
     <button type="submit" name="action" value="upload_to_buffer">上传至缓冲区</button>
 </form>
+<script>
+    document.getElementById('file_input').addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            var file = e.target.files[0];
+            document.getElementById('file_mtime').value = file.lastModified;
+        }
+    });
+</script>
 <br>
 <form action="/uploader" method="post" enctype="multipart/form-data">
     <input type="hidden" name="amount" value="all">
