@@ -132,7 +132,6 @@ dmypy.json
 .DS_Store
 nohup.out
 .idea
-migrations
-/data/dynamic
 .vscode
+/data/dynamic
 /staticfiles
