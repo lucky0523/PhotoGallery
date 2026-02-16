@@ -37,23 +37,6 @@ def nav(request):
         dlist.sort(reverse=True)
         return render(request, 'navigation.html', context)
 
-# interface
-def resolving(request):
-    for sub_path in os.scandir(Static.PATH_UNSORTED_PHOTOS):
-        if utils.is_photo_file(sub_path):
-            model = PhotoInfo(path=os.path.relpath(sub_path))
-            model.resolving_digital()
-
-    for sub_path in os.scandir(Static.PATH_UNSORTED_FILMS):
-        if utils.is_photo_file(sub_path):
-            model = PhotoInfo(path=os.path.relpath(sub_path))
-            model.resolving_film()
-    plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
-    i = 0
-    for p in plist:
-        p.set_order(i)
-        i = i + 1
-    return HttpResponse('resolve done')
 
 # internal interface
 def query_image(request):
@@ -162,8 +145,8 @@ def reset(request):
         p.delete()
     utils.clear_dir(Static.PATH_SORTED_SHOW_PHOTOS)
     utils.clear_dir(Static.PATH_SORTED_THUMBNAIL_PHOTOS)
-    utils.unsort_files(Static.PATH_SORTED_RAW_PHOTOS, Static.PATH_UNSORTED_PHOTOS)
-    utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UNSORTED_FILMS)
+    utils.unsort_files(Static.PATH_SORTED_RAW_DIGITAL_PHOTOS, Static.PATH_UPLOADED_DIGITAL_PHOTOS)
+    utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UPLOADED_FILMS)
     return HttpResponse('reset done')
 
 # interface
@@ -213,12 +196,16 @@ def uploader(request):
             is_film = request.POST.get('is_film', -1) == "True"
             if amount == 'one':
                 path = request.POST.get('path', -1)
-                logger.info('Add one photo: {}'.format(path))
+                if is_film:
+                    logger.info('Add one film: {}'.format(path))
+                else:
+                    logger.info('Add one digital photo: {}'.format(path))
                 add_one(path, is_film)
                 msg = '已添加一张'
             elif amount == 'all':
                 logger.info('Add all photo')
-                add_all(Static.PATH_UPLOADED)
+                add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS, is_film=False)
+                add_all(Static.PATH_UPLOADED_FILMS, is_film=True)
                 msg = '已添加全部'
         elif action == 'remove_from_buffer':
             path = request.POST.get('path', -1)
@@ -230,26 +217,15 @@ def uploader(request):
         pass
     logger.info("扫描UPLOADED文件夹")
     photo_list = []
-    for sub_path in os.scandir(Static.PATH_UPLOADED):
+    for sub_path in os.scandir(Static.PATH_UPLOADED_DIGITAL_PHOTOS):
         if utils.is_photo_file(sub_path):
-            model = PhotoInfo(path=os.path.relpath(sub_path))
-            model.resolving_digital(False, False)
-            base_name = os.path.splitext(sub_path.name)[0]
-            thumbnail_name = f"{base_name}{Static.SUFFIX_THUMBNAIL}"
-            thumbnail_path = os.path.relpath(os.path.join(Static.PATH_UPLOADED_TEMP, thumbnail_name))
-            if not utils.is_photo_file(thumbnail_path):
-                #生产缩略图，文件存放在PATH_UPLOADED_TEMP，缩略图与原图同名
-                logger.info("Thumbnail not exist, make it: {}".format(sub_path.name))
-                model.thumbnail_path = utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_TEMP, sub_path.name)
-            else:
-                logger.info("Thumbnail exist: {}".format(thumbnail_path))
-                model.thumbnail_path = thumbnail_path
-            logger.info('Show a cached photo: {}'.format(model.__dict__))
+            model = PhotoInfo(path=os.path.relpath(sub_path), is_film=False)
+            process_uploaded_buffer(model, sub_path)
             photo_list.append(utils.photo_to_dict(model))
     for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS):
         if utils.is_photo_file(sub_path):
-            model = PhotoInfo(path=os.path.relpath(sub_path))
-            model.resolving_film(False)
+            model = PhotoInfo(path=os.path.relpath(sub_path), is_film=True)
+            process_uploaded_buffer(model, sub_path)
             photo_list.append(utils.photo_to_dict(model))
 
     utils.clean_uploaded_temp()
@@ -271,8 +247,8 @@ def add_photo(request):
             pass
         else:
             logger.info('Add all photo')
-            add_all(Static.PATH_UPLOADED)
-            add_all(Static.PATH_UPLOADED_FILMS, Static.KEY_FILM)
+            add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS, is_film=False)
+            add_all(Static.PATH_UPLOADED_FILMS, is_film=True)
             msg = '已添加全部'
     html = ("<html><body>%s<br><br>"
             "<a href=\"/\">返回首页</a><br>"
@@ -282,32 +258,6 @@ def add_photo(request):
     return HttpResponse(html)
 
 
-def add_all(path, film_or_digital=Static.KEY_DIGITAL):
-    for sub_path in os.scandir(path):
-        if utils.is_photo_file(sub_path):
-          model = PhotoInfo(path=os.path.relpath(sub_path))
-          model.resolving(True, film_or_digital)
-
-    plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
-    i = 0
-    for p in plist:
-        p.set_order(i)
-        i = i + 1
-
-
-def add_one(path, is_film=False):
-    if is_film:
-        model = PhotoInfo(path=path)
-        model.resolving_film()
-    else:
-        model = PhotoInfo(path=path)
-        model.resolving_digital()
-        plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
-        i = 0
-        for p in plist:
-            p.set_order(i)
-            i = i + 1
-    
 # interface
 def action(request):
     logger.info('Action request: %s', request.GET)
@@ -356,3 +306,42 @@ def wx_verify(request):
 # test interface
 def position_picker(request):
     return render(request, 'map_position_picker.html', {'message': "Hello World!"})
+
+
+def add_all(path, is_film=False):
+    for sub_path in os.scandir(path):
+        if utils.is_photo_file(sub_path):
+          model = PhotoInfo(path=os.path.relpath(sub_path), is_film=is_film)
+          model.resolving()
+
+    plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
+    i = 0
+    for p in plist:
+        p.set_order(i)
+        i = i + 1
+
+
+def add_one(path, is_film=False):
+    model = PhotoInfo(path=os.path.relpath(path), is_film=is_film)
+    model.resolving()
+    if not is_film:
+        plist = PhotoInfo.objects.filter(is_film=0).order_by("-shooting_time")
+        i = 0
+        for p in plist:
+            p.set_order(i)
+            i = i + 1
+
+
+def process_uploaded_buffer(model,sub_path):
+    model.resolving(False, False)
+    base_name = os.path.splitext(sub_path.name)[0]
+    thumbnail_name = f"{base_name}{Static.EXTS_THUMBNAIL}"
+    thumbnail_path = os.path.relpath(os.path.join(Static._PATH_UPLOADED_THUMBNAIL, thumbnail_name))
+    if not utils.is_photo_file(thumbnail_path):
+        #生产缩略图，文件存放在_PATH_UPLOADED_THUMBNAIL，缩略图与原图同名
+        logger.info("Thumbnail not exist, make it: {}".format(sub_path.name))
+        model.thumbnail_path = utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static._PATH_UPLOADED_THUMBNAIL, sub_path.name)
+    else:
+        logger.info("Thumbnail exist: {}".format(thumbnail_path))
+        model.thumbnail_path = thumbnail_path
+    logger.info('Show a cached photo: {}'.format(model.__dict__))

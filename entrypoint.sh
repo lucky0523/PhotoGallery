@@ -8,8 +8,9 @@ mkdir -p /app/data
 chown -R appuser:appuser /app/data
 chmod -R 755 /app/data
 
-# 自动执行数据库迁移（仅执行 migrate，makemigrations 在开发时手动执行）
+# 自动执行数据库迁移
 echo "Running database migrations..."
+gosu appuser python manage.py makemigrations --noinput
 gosu appuser python manage.py migrate --noinput
 echo "Migrations completed."
 

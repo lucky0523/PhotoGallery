@@ -49,10 +49,11 @@ class PhotoInfo(models.Model):
         return 'Photo info:\r\nVendor:{}\r\nDevice:{}\r\nPath:{}\r\n' \
             .format(self.vendor, self.device, self.path)
 
-    def resolving(self, need_to_save_to_db=True,film_or_digital=Static.KEY_DIGITAL,need_to_get_gps=True):
-        if film_or_digital == Static.KEY_FILM:
+    def resolving(self, need_to_save_to_db=True, need_to_get_gps=True):
+        logger.info(f'Process photo: {self.path}')
+        if self.is_film:
             self.resolving_film(need_to_save_to_db)
-        elif film_or_digital == Static.KEY_DIGITAL:
+        else:
             self.resolving_digital(need_to_save_to_db, need_to_get_gps)
 
     def resolving_digital(self, need_to_save_to_db=True, need_to_get_gps=True):
@@ -147,20 +148,19 @@ class PhotoInfo(models.Model):
             # 先保存数据库，再移动文件；否则若保存失败，文件又被移动，不好处理
             self.save()
             try:
-                self.path = utils.move_file(raw_path, Static.PATH_SORTED_RAW_PHOTOS + str(date.year) + '/',
-                                            self.formatted_name)
-
-                self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                self.path = os.path.relpath(utils.move_file(raw_path, Static.PATH_SORTED_RAW_DIGITAL_PHOTOS + str(date.year) + '/',
+                                            self.formatted_name))
+                self.thumbnail_path = os.path.relpath(utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
                                                                     Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
-                                                                    self.formatted_name)
-                self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                                                    self.formatted_name))
+                self.show_path = os.path.relpath(utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
                                                         Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
-                                                        self.formatted_name)
+                                                        self.formatted_name))
                 self.save()
             except Exception as e:
                 logging.error(f"Error moving file: {e}, move to raw path: {raw_path}")
                 # 若移动文件失败，删除数据库记录，文件也会被移动到原始位置，缩略图和显示图也会被删除
-                self.path = utils.move_file(self.path, raw_path)
+                self.path = os.path.relpath(utils.move_file(self.path, raw_path))
                 if os.path.isfile(self.thumbnail_path):
                     os.remove(self.thumbnail_path)
                 if os.path.isfile(self.show_path):
@@ -173,16 +173,28 @@ class PhotoInfo(models.Model):
         self.order_id = int(time.time() * 1000)
         self.formatted_name = str(self.order_id)
 
+
         if need_to_save_to_db:
-            self.path = utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS,
-                                        self.formatted_name + '.' + self.file_format)
-            self.thumbnail_path = utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                              Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
-                                                              self.formatted_name + '.jpg')
-            self.show_path = utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                                   Static.PATH_SORTED_SHOW_PHOTOS + Static.KEY_FILMS + '/',
-                                                   self.formatted_name + '.jpg')
             self.save()
+            try:
+                self.path = os.path.relpath(utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS,
+                                            self.formatted_name + '.' + self.file_format))
+                self.thumbnail_path = os.path.relpath(utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
+                                                                Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
+                                                                self.formatted_name + Static.EXTS_THUMBNAIL))
+                self.show_path = os.path.relpath(utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
+                                                    Static.PATH_SORTED_SHOW_PHOTOS + Static.KEY_FILMS + '/',
+                                                    self.formatted_name + Static.EXTS_THUMBNAIL))
+                self.save()
+            except Exception as e:
+                logging.error(f"Error moving file: {e}, move to raw path: {raw_path}")
+                # 若移动文件失败，删除数据库记录，文件也会被移动到原始位置，缩略图和显示图也会被删除
+                self.path = os.path.relpath(utils.move_file(self.path, raw_path))
+                if os.path.isfile(self.thumbnail_path):
+                    os.remove(self.thumbnail_path)
+                if os.path.isfile(self.show_path):
+                    os.remove(self.show_path)
+                self.delete()
 
     def set_order(self, order):
         self.order_id = order

@@ -11,7 +11,6 @@ API_VERSION = '0.1'
 
 SIZE_THUMBNAIL = 500
 SIZE_SHOW_MAX_SIDE = 2400
-SUFFIX_THUMBNAIL = '.jpg'
 
 KEY_FILMS = 'films'
 EARLIER_YEAR = 2019
@@ -21,9 +20,6 @@ KEY_BAIDUMAP_WEB_SECRET_AK = 'TSuBY5iecr0Qjq8jvTJrghaLchcEsXMG'
 KEY_LOCATIONIQ_API_KEY = 'pk.01dc375f25ac297af2c84a48532a291c'
 KEY_BIGDATACLOUD_API_KEY = 'bdc_9309edc9429241c382c2deac7943d59c'
 
-KEY_FILM = 'film'
-KEY_DIGITAL = 'digital'
-
 DEVICES_DICT = {
     'M2007J1SC': 'Mi10 Ultra',
     '2304FPN6DG': 'Mi13 Ultra',
@@ -31,44 +27,39 @@ DEVICES_DICT = {
     'FC220': 'Dji Mavic Pro',
 }
 
-PIC_EXTS = ('.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.raw', '.cr2', '.nef', '.arw', '.heic')
+EXTS_THUMBNAIL = '.jpg'
+EXTS_PIC = ('.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.raw', '.cr2', '.nef', '.arw', '.heic')
 
 _initialized = False
-_PATH_UNSORTED_PHOTOS = None
-_PATH_SORTED_RAW_PHOTOS = None
+_PATH_SORTED_RAW_DIGITAL_PHOTOS = None
+_PATH_SORTED_RAW_FILMS = None
 _PATH_SORTED_SHOW_PHOTOS = None
 _PATH_SORTED_THUMBNAIL_PHOTOS = None
-_PATH_UNSORTED_FILMS = None
-_PATH_SORTED_RAW_FILMS = None
-_PATH_UPLOADED = None
-_PATH_UPLOADED_TEMP = None
+_PATH_UPLOADED_DIGITAL_PHOTOS = None
+_PATH_UPLOADED_THUMBNAIL = None
 _PATH_UPLOADED_FILMS = None
 
 
 def _init_paths():
     global _initialized
-    global _PATH_UNSORTED_PHOTOS
-    global _PATH_SORTED_RAW_PHOTOS
+    global _PATH_SORTED_RAW_DIGITAL_PHOTOS
     global _PATH_SORTED_SHOW_PHOTOS
     global _PATH_SORTED_THUMBNAIL_PHOTOS
-    global _PATH_UNSORTED_FILMS
     global _PATH_SORTED_RAW_FILMS
-    global _PATH_UPLOADED
-    global _PATH_UPLOADED_TEMP
+    global _PATH_UPLOADED_DIGITAL_PHOTOS
+    global _PATH_UPLOADED_THUMBNAIL
     global _PATH_UPLOADED_FILMS
     
     if _initialized:
         return
     
     from django.conf import settings
-    _PATH_UNSORTED_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'unsorted') + '/'
-    _PATH_SORTED_RAW_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'sorted', 'raw') + '/'
-    _PATH_SORTED_SHOW_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'sorted', 'show') + '/'
-    _PATH_SORTED_THUMBNAIL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'sorted', 'thumbnail') + '/'
-    _PATH_UNSORTED_FILMS = os.path.join(settings.MEDIA_ROOT, 'photos', 'unsorted_films') + '/'
-    _PATH_SORTED_RAW_FILMS = os.path.join(settings.MEDIA_ROOT, 'photos', 'sorted', 'raw_films') + '/'
-    _PATH_UPLOADED = os.path.join(settings.MEDIA_ROOT, 'uploaded') + '/'
-    _PATH_UPLOADED_TEMP = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'temp') + '/'
+    _PATH_SORTED_RAW_DIGITAL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'raw_digital') + '/'
+    _PATH_SORTED_SHOW_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'show') + '/'
+    _PATH_SORTED_THUMBNAIL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'thumbnail') + '/'
+    _PATH_SORTED_RAW_FILMS = os.path.join(settings.MEDIA_ROOT, 'photos', 'raw_films') + '/'
+    _PATH_UPLOADED_DIGITAL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'digital_photos') + '/'
+    _PATH_UPLOADED_THUMBNAIL = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'thumbnail') + '/'
     _PATH_UPLOADED_FILMS = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'films') + '/'
     
     _initialized = True
@@ -76,35 +67,27 @@ def _init_paths():
 
 class _ModuleProxy:
     def __getattr__(self, name):
-        if name == 'PATH_UNSORTED_PHOTOS':
+        if name == 'PATH_SORTED_RAW_DIGITAL_PHOTOS':
             _init_paths()
-            return _PATH_UNSORTED_PHOTOS
-        elif name == 'PATH_SORTED_RAW_PHOTOS':
-            _init_paths()
-            return _PATH_SORTED_RAW_PHOTOS
+            return _PATH_SORTED_RAW_DIGITAL_PHOTOS
         elif name == 'PATH_SORTED_SHOW_PHOTOS':
             _init_paths()
             return _PATH_SORTED_SHOW_PHOTOS
         elif name == 'PATH_SORTED_THUMBNAIL_PHOTOS':
             _init_paths()
             return _PATH_SORTED_THUMBNAIL_PHOTOS
-        elif name == 'PATH_UNSORTED_FILMS':
-            _init_paths()
-            return _PATH_UNSORTED_FILMS
         elif name == 'PATH_SORTED_RAW_FILMS':
             _init_paths()
             return _PATH_SORTED_RAW_FILMS
-        elif name == 'PATH_UPLOADED':
+        elif name == 'PATH_UPLOADED_DIGITAL_PHOTOS':
             _init_paths()
-            return _PATH_UPLOADED
-        elif name == 'PATH_UPLOADED_TEMP':
+            return _PATH_UPLOADED_DIGITAL_PHOTOS
+        elif name == 'PATH_UPLOADED_THUMBNAIL':
             _init_paths()
-            return _PATH_UPLOADED_TEMP
+            return _PATH_UPLOADED_THUMBNAIL
         elif name == 'PATH_UPLOADED_FILMS':
             _init_paths()
             return _PATH_UPLOADED_FILMS
-        elif name == 'ensure_path_directories_exist':
-            return ensure_path_directories_exist
         else:
             return globals()[name]
 
@@ -115,14 +98,12 @@ def ensure_path_directories_exist():
     """
     _init_paths()
     path_attrs = [
-        'PATH_UNSORTED_PHOTOS',
-        'PATH_SORTED_RAW_PHOTOS',
+        'PATH_SORTED_RAW_DIGITAL_PHOTOS',
         'PATH_SORTED_SHOW_PHOTOS',
         'PATH_SORTED_THUMBNAIL_PHOTOS',
-        'PATH_UNSORTED_FILMS',
         'PATH_SORTED_RAW_FILMS',
-        'PATH_UPLOADED',
-        'PATH_UPLOADED_TEMP',
+        'PATH_UPLOADED_DIGITAL_PHOTOS',
+        'PATH_UPLOADED_THUMBNAIL',
         'PATH_UPLOADED_FILMS',
     ]
     for attr_name in path_attrs:
