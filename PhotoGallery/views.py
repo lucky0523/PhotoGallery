@@ -161,7 +161,7 @@ def uploader(request):
             file_mtime = request.POST.get('file_mtime', None)
             if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
-                save_path = Static.PATH_UPLOADED
+                save_path = Static.PATH_UPLOADED_DIGITAL_PHOTOS
                 if is_film:
                     logger.info("Upload film photo")
                     save_path = Static.PATH_UPLOADED_FILMS
