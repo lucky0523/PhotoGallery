@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/app/data
+      - static_volume:/app/staticfiles  # collectstatic 写入这里
     environment:
       - DJANGO_SETTINGS_MODULE=PhotoGallery.settings
       - PRODUCTION=true
@@ -13,7 +14,7 @@ services:
       - "8000"
 
   caddy:
-    image: caddy:2-alpine   # ← 改成 alpine 版，更小更省资源（推荐）
+    image: caddy:2-alpine
     container_name: photo-gallery-caddy
     restart: unless-stopped
     depends_on:
@@ -21,14 +22,14 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      # - "443:443/udp"   # 如果想支持 HTTP/3，可加
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    networks:             # ← 可选：显式网络（默认 compose 会创建）
-      - default
+      - static_volume:/srv/static:ro   # 与 web 共享，只读
+      - ./data/dynamic:/srv/media:ro   # 媒体文件，只读
 
 volumes:
   caddy_data:
   caddy_config:
+  static_volume:  # 共享静态文件卷
