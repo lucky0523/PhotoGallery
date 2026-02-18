@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'PhotoInfo'
+    'PhotoInfo',
+    'request',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'request.middleware.RequestMiddleware',
 ]
 
 ROOT_URLCONF = 'PhotoGallery.urls'
@@ -136,6 +138,28 @@ UPLOADED_IMAGE_ROOT = os.path.join(MEDIA_ROOT, "uploaded")
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# django-request 配置
+
+# 忽略的路径（正则表达式，支持 re 语法）
+# 注意：django-request 使用 request.path[1:]，所以不需要开头的斜杠
+REQUEST_IGNORE_PATHS = [
+    r'^static/',              # 静态文件
+    r'^media/',               # 用户上传文件
+    r'^data/', 
+    r'^admin/.*',             # admin 后台（可选，如果你想记录 admin 访问可以去掉）
+    r'^@vite/.*',  # django-request 记录的请求（可选，根据需要保留）
+    r'^favicon\.ico$',
+    r'^robots\.txt$',
+    r'^__debug__/',           # 如果用了 django-debug-toolbar
+]
+
+# 忽略特定 User-Agent（爬虫、监控工具等）
+REQUEST_IGNORE_USER_AGENTS = [
+    'bot', 'spider', 'crawler',
+    'Googlebot', 'Bingbot', 'Slurp',
+    'Python-urllib', 'requests',
+]
 
 from PhotoGallery.common import Static
 

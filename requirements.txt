@@ -1,6 +1,7 @@
 Django==6.0.2
-Requests==2.31.0
-pyuwsgi
 ExifRead==3.5.1
 Pillow==12.1.1
 pillow-heif==1.2.0
+django-request==1.7.1
+Requests==2.31.0
+pyuwsgi
