@@ -135,8 +135,19 @@
                         show_wait_process();
                         $(window).unbind('scroll');
                         page = page.replaceAll(" ", "%20");
-                        $("#page_content").load(page, {}, function (response, status, xhr) {
-                            hide_wait_process();
+                        $.ajax({
+                            url: page,
+                            type: 'GET',
+                            beforeSend: function(xhr) {
+                                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                            },
+                            success: function(response) {
+                                $("#page_content").html(response);
+                                hide_wait_process();
+                            },
+                            error: function() {
+                                hide_wait_process();
+                            }
                         });
                     }
                     else {

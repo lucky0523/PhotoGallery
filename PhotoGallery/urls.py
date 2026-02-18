@@ -22,17 +22,20 @@ from django.conf.urls.static import static
 from PhotoGallery import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     re_path(r'^$', views.nav),
-    path('editor', views.editor),
-    path('uploader', views.uploader),
 
+    # 内部请求接口
     path('query_list', views.query_list),
     path('query_image', views.query_image),
-    path('reset', views.reset),
-    path('imgviewer', views.img_viewer),
     path('action', views.action),
-    path('get_all_films', views.get_all_films),
+
+    # 管理员接口
+    path('admin/', admin.site.urls),
+    path('editor', views.editor),
+    path('uploader', views.uploader),
+    path('reset', views.reset),
+
+
     path('tencent9176013635572033544.txt/', views.wx_verify),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path('dynamic/photos/show/(?P<path>.*)', serve, {'document_root': settings.SHOW_IMAGE_ROOT}),

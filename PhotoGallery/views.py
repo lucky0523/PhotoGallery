@@ -2,15 +2,34 @@ import json
 import logging
 import os
 import random
+from functools import wraps
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import render, redirect
 from django.db.models import Q
 
 from PhotoGallery.common import Static, utils
 from PhotoInfo.models import PhotoInfo
+
+
+def require_internal_request(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        x_requested_with = request.META.get('HTTP_X_REQUESTED_WITH')
+        if x_requested_with == 'XMLHttpRequest':
+            return view_func(request, *args, **kwargs)
+        
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            referer_netloc = urlparse(referer).netloc
+            if referer_netloc in request.get_host():
+                return view_func(request, *args, **kwargs)
+        
+        return HttpResponseForbidden('Access denied')
+    return _wrapped_view
 
 LOG_TAG = '[PhotoGallery.views] '
 logging.basicConfig(level=Static.LOG_LEVEL, force=True, format='%(asctime)s - %(name)s %(levelname)s - %(message)s')
@@ -39,6 +58,7 @@ def nav(request):
 
 
 # internal interface
+@require_internal_request
 def query_image(request):
     order_str = request.GET.get('order', -1)
     year_str = request.GET.get('year', -1)
@@ -82,6 +102,7 @@ def query_image(request):
     return HttpResponse(json.dumps(view_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
 # internal interface
+@require_internal_request
 def query_list(request):
     homepage = request.GET.get('homepage', 0)
     year = request.GET.get('year', 1)
@@ -111,9 +132,6 @@ def query_list(request):
     else:
         return render(request, 'gallery.html', context)
 
-# interface
-def img_viewer(request):
-    return render(request, 'image_viewer.html')
 
 # interface
 def editor(request):
@@ -126,17 +144,6 @@ def editor(request):
     context = {'msg': msg, 'photos': photo_list}
     return render(request, 'editor.html', context)
 
-# interface
-def get_all_films(request):
-    plist = PhotoInfo.objects.filter(is_film=1)
-    l = []
-    for p in plist:
-        f = {
-            'id': p.id,
-            'film_model': p.film_model
-        }
-        l.append(f)
-    return HttpResponse(json.dumps(l, sort_keys=True, indent=4, separators=(',', ': ')))
 
 # test interface
 def reset(request):
@@ -259,6 +266,7 @@ def add_photo(request):
 
 
 # interface
+@require_internal_request
 def action(request):
     logger.info('Action request: %s', request.GET)
     msg = ''
