@@ -240,30 +240,6 @@ def uploader(request):
     context = {'msg': msg, 'photos': photo_list}
     return render(request, 'uploader.html', context)
 
-# internal interface
-def add_photo(request):
-    msg = ''
-    if request.method == 'POST':
-        one = request.POST.get('one', -1) == "True"
-        is_film = request.POST.get('is_film', -1) == "True"
-        if one:
-            path = request.POST.get('path', -1)[1:]
-            logger.info('Add one photo: {}'.format(path))
-            add_one(path, is_film)
-            msg = '已添加一张'
-            pass
-        else:
-            logger.info('Add all photo')
-            add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), is_film=False)
-            add_all(Static.PATH_UPLOADED_FILMS(), is_film=True)
-            msg = '已添加全部'
-    html = ("<html><body>%s<br><br>"
-            "<a href=\"/\">返回首页</a><br>"
-            "<a href=\"/editor\">编辑图片</a><br>"
-            "<a href=\"/uploader\">继续上传</a>"
-            "</body></html>") % msg
-    return HttpResponse(html)
-
 
 # interface
 @require_internal_request
