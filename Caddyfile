@@ -1,0 +1,58 @@
+{
+    # 全局设置（可选）
+    email lucky0523@gmail.com   # ← 强烈建议加你的真实邮箱，Let's Encrypt 会发续期/问题通知
+    debug                          # 调试时打开，生产可注释掉
+}
+
+huoyi.dynv6.net {
+    # 自动申请/续期 Let's Encrypt 证书（默认用 HTTP-01 挑战，需要 80 端口通）
+    # 如果你想用自己的邮箱，取消下面注释并改邮箱
+    # tls your-real-email@gmail.com
+
+    # 强制 HTTP → HTTPS 重定向（默认已开，但显式写出来更清晰）
+    redir @http https://{host}{uri} 301
+    @http {
+        protocol http
+    }
+
+    # 反向代理到 Django/uWSGI 容器
+    reverse_proxy web:8000 {
+        # 传递真实客户端 IP（Docker 内部网络常用范围）
+        trusted_proxies 172.16.0.0/12 10.0.0.0/8 192.168.0.0/16
+
+        # 健康检查（可选，如果你的 Django 有健康端点更好）
+        # health_uri /health/ 
+        # health_interval 30s
+        # health_timeout 5s
+    }
+
+    # 直接由 Caddy 提供静态文件（更快，不走 Django）
+    file_server /static/* {
+        root /app/staticfiles
+        browse off
+    }
+
+    # 媒体文件（用户上传的照片、动态内容）
+    file_server /media/* {
+        root /app/data/dynamic
+        browse off
+    }
+
+    # 响应压缩（节省流量）
+    encode gzip zstd
+
+    # 日志（调试用，生产可注释或改 output file /var/log/caddy/access.log）
+    log {
+        output stderr
+        format console
+    }
+
+    # 可选：添加安全 header（推荐）
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+}

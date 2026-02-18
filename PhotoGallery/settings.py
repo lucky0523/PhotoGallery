@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-klr2ni($s918sb@69*ht9b076%pbec^1hc+38ok1xx#=!lt9x=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['huoyi.dynv6.net', 'www.huoyi.dynv6.net', 'localhost', '127.0.0.1']  # 加 www 如果你也想支持
 
 
 # Application definition
@@ -160,6 +160,21 @@ REQUEST_IGNORE_USER_AGENTS = [
     'Googlebot', 'Bingbot', 'Slurp',
     'Python-urllib', 'requests',
 ]
+
+# HTTPS 相关（Caddy 会设置 X-Forwarded-Proto）
+# 通过环境变量 PRODUCTION 来控制是否启用生产环境安全设置
+PRODUCTION = os.environ.get('PRODUCTION', 'false').lower() == 'true'
+
+if PRODUCTION:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True          # 自动把 HTTP 请求重定向到 HTTPS（推荐开）
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    # 开发环境，禁用 HTTPS 强制重定向
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 from PhotoGallery.common import Static
 
