@@ -148,13 +148,13 @@ class PhotoInfo(models.Model):
             # 先保存数据库，再移动文件；否则若保存失败，文件又被移动，不好处理
             self.save()
             try:
-                self.path = os.path.relpath(utils.move_file(raw_path, Static.PATH_SORTED_RAW_DIGITAL_PHOTOS + str(date.year) + '/',
+                self.path = os.path.relpath(utils.move_file(raw_path, Static.PATH_SORTED_RAW_DIGITAL_PHOTOS() + str(date.year) + '/',
                                             self.formatted_name))
                 self.thumbnail_path = os.path.relpath(utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                                    Static.PATH_SORTED_THUMBNAIL_PHOTOS + str(date.year) + '/',
+                                                                    Static.PATH_SORTED_THUMBNAIL_PHOTOS() + str(date.year) + '/',
                                                                     self.formatted_name))
                 self.show_path = os.path.relpath(utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                                        Static.PATH_SORTED_SHOW_PHOTOS + str(date.year) + '/',
+                                                        Static.PATH_SORTED_SHOW_PHOTOS() + str(date.year) + '/',
                                                         self.formatted_name))
                 self.save()
             except Exception as e:
@@ -177,13 +177,13 @@ class PhotoInfo(models.Model):
         if need_to_save_to_db:
             self.save()
             try:
-                self.path = os.path.relpath(utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS,
+                self.path = os.path.relpath(utils.move_file(self.path, Static.PATH_SORTED_RAW_FILMS(),
                                             self.formatted_name + '.' + self.file_format))
                 self.thumbnail_path = os.path.relpath(utils.make_square_thumbnail(self.path, Static.SIZE_THUMBNAIL,
-                                                                Static.PATH_SORTED_THUMBNAIL_PHOTOS + Static.KEY_FILMS + '/',
+                                                                Static.PATH_SORTED_THUMBNAIL_PHOTOS() + Static.KEY_FILMS + '/',
                                                                 self.formatted_name + Static.EXTS_THUMBNAIL))
                 self.show_path = os.path.relpath(utils.make_show_image(self.path, Static.SIZE_SHOW_MAX_SIDE,
-                                                    Static.PATH_SORTED_SHOW_PHOTOS + Static.KEY_FILMS + '/',
+                                                    Static.PATH_SORTED_SHOW_PHOTOS() + Static.KEY_FILMS + '/',
                                                     self.formatted_name + Static.EXTS_THUMBNAIL))
                 self.save()
             except Exception as e:

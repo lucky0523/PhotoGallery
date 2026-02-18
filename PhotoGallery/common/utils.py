@@ -315,9 +315,9 @@ def reset_photo(photo):
     os.remove(photo.thumbnail_path)
     os.remove(photo.show_path)
     if photo.is_film:
-        move_file(photo.path, Static.PATH_UPLOADED_FILMS)
+        move_file(photo.path, Static.PATH_UPLOADED_FILMS())
     else:
-        move_file(photo.path, Static.PATH_UPLOADED_DIGITAL_PHOTOS)
+        move_file(photo.path, Static.PATH_UPLOADED_DIGITAL_PHOTOS())
     photo.delete()
 
 def is_photo_file(file_name):
@@ -332,19 +332,19 @@ def clean_uploaded_temp():
     清理 PATH_UPLOADED_THUMBNAIL 文件夹中多余的缩略图文件。
     如果在 PATH_UPLOADED 和 PATH_UPLOADED_FILMS 中找不到同名的源文件，则删除该缩略图。
     """
-    if not os.path.exists(Static.PATH_UPLOADED_THUMBNAIL):
+    if not os.path.exists(Static.PATH_UPLOADED_THUMBNAIL()):
         logger.info("上传临时缩略图目录不存在，跳过清理")
         return
 
-    for thumb in os.scandir(Static.PATH_UPLOADED_THUMBNAIL):
+    for thumb in os.scandir(Static.PATH_UPLOADED_THUMBNAIL()):
         if thumb.is_file() and thumb.name.lower().endswith(Static.EXTS_THUMBNAIL):
             base_name = os.path.splitext(thumb.name)[0]
             # 构造可能的源文件名（支持常见原图扩展名）
             source_found = False
             for ext in Static.EXTS_PIC:
                 source_file = base_name + ext
-                if (os.path.isfile(os.path.join(Static.PATH_UPLOADED_DIGITAL_PHOTOS, source_file)) or
-                        os.path.isfile(os.path.join(Static.PATH_UPLOADED_FILMS, source_file))):
+                if (os.path.isfile(os.path.join(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), source_file)) or
+                        os.path.isfile(os.path.join(Static.PATH_UPLOADED_FILMS(), source_file))):
                     source_found = True
                     break
             if not source_found:

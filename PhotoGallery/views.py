@@ -19,10 +19,10 @@ logger = logging.getLogger(LOG_TAG)
 # interface
 def nav(request):
     dlist = []
-    if not os.path.exists(Static.PATH_SORTED_SHOW_PHOTOS):
+    if not os.path.exists(Static.PATH_SORTED_SHOW_PHOTOS()):
         return render(request, 'navigation.html')
     else:
-        for sub_path in os.scandir(Static.PATH_SORTED_SHOW_PHOTOS):
+        for sub_path in os.scandir(Static.PATH_SORTED_SHOW_PHOTOS()):
             if os.path.isdir(sub_path):
                 if utils.is_number(os.path.basename(sub_path)):
                     if int(os.path.basename(sub_path)) <= Static.EARLIER_YEAR:
@@ -143,10 +143,10 @@ def reset(request):
     plist = PhotoInfo.objects.all()
     for p in plist:
         p.delete()
-    utils.clear_dir(Static.PATH_SORTED_SHOW_PHOTOS)
-    utils.clear_dir(Static.PATH_SORTED_THUMBNAIL_PHOTOS)
-    utils.unsort_files(Static.PATH_SORTED_RAW_DIGITAL_PHOTOS, Static.PATH_UPLOADED_DIGITAL_PHOTOS)
-    utils.unsort_files(Static.PATH_SORTED_RAW_FILMS, Static.PATH_UPLOADED_FILMS)
+    utils.clear_dir(Static.PATH_SORTED_SHOW_PHOTOS())
+    utils.clear_dir(Static.PATH_SORTED_THUMBNAIL_PHOTOS())
+    utils.unsort_files(Static.PATH_SORTED_RAW_DIGITAL_PHOTOS(), Static.PATH_UPLOADED_DIGITAL_PHOTOS())
+    utils.unsort_files(Static.PATH_SORTED_RAW_FILMS(), Static.PATH_UPLOADED_FILMS())
     return HttpResponse('reset done')
 
 # interface
@@ -161,10 +161,10 @@ def uploader(request):
             file_mtime = request.POST.get('file_mtime', None)
             if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
-                save_path = Static.PATH_UPLOADED_DIGITAL_PHOTOS
+                save_path = Static.PATH_UPLOADED_DIGITAL_PHOTOS()
                 if is_film:
                     logger.info("Upload film photo")
-                    save_path = Static.PATH_UPLOADED_FILMS
+                    save_path = Static.PATH_UPLOADED_FILMS()
                 if not os.path.exists(save_path):
                     os.makedirs(save_path, exist_ok=True)
                 
@@ -204,8 +204,8 @@ def uploader(request):
                 msg = '已添加一张'
             elif amount == 'all':
                 logger.info('Add all photo')
-                add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS, is_film=False)
-                add_all(Static.PATH_UPLOADED_FILMS, is_film=True)
+                add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), is_film=False)
+                add_all(Static.PATH_UPLOADED_FILMS(), is_film=True)
                 msg = '已添加全部'
         elif action == 'remove_from_buffer':
             path = request.POST.get('path', -1)
@@ -217,12 +217,12 @@ def uploader(request):
         pass
     logger.info("扫描UPLOADED文件夹")
     photo_list = []
-    for sub_path in os.scandir(Static.PATH_UPLOADED_DIGITAL_PHOTOS):
+    for sub_path in os.scandir(Static.PATH_UPLOADED_DIGITAL_PHOTOS()):
         if utils.is_photo_file(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path), is_film=False)
             process_uploaded_buffer(model, sub_path)
             photo_list.append(utils.photo_to_dict(model))
-    for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS):
+    for sub_path in os.scandir(Static.PATH_UPLOADED_FILMS()):
         if utils.is_photo_file(sub_path):
             model = PhotoInfo(path=os.path.relpath(sub_path), is_film=True)
             process_uploaded_buffer(model, sub_path)
@@ -247,8 +247,8 @@ def add_photo(request):
             pass
         else:
             logger.info('Add all photo')
-            add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS, is_film=False)
-            add_all(Static.PATH_UPLOADED_FILMS, is_film=True)
+            add_all(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), is_film=False)
+            add_all(Static.PATH_UPLOADED_FILMS(), is_film=True)
             msg = '已添加全部'
     html = ("<html><body>%s<br><br>"
             "<a href=\"/\">返回首页</a><br>"
@@ -336,11 +336,11 @@ def process_uploaded_buffer(model,sub_path):
     model.resolving(False, False)
     base_name = os.path.splitext(sub_path.name)[0]
     thumbnail_name = f"{base_name}{Static.EXTS_THUMBNAIL}"
-    thumbnail_path = os.path.relpath(os.path.join(Static._PATH_UPLOADED_THUMBNAIL, thumbnail_name))
+    thumbnail_path = os.path.relpath(os.path.join(Static.PATH_UPLOADED_THUMBNAIL(), thumbnail_name))
     if not utils.is_photo_file(thumbnail_path):
         #生产缩略图，文件存放在_PATH_UPLOADED_THUMBNAIL，缩略图与原图同名
         logger.info("Thumbnail not exist, make it: {}".format(sub_path.name))
-        model.thumbnail_path = utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static._PATH_UPLOADED_THUMBNAIL, sub_path.name)
+        model.thumbnail_path = utils.make_show_image(sub_path, Static.SIZE_THUMBNAIL, Static.PATH_UPLOADED_THUMBNAIL(), sub_path.name)
     else:
         logger.info("Thumbnail exist: {}".format(thumbnail_path))
         model.thumbnail_path = thumbnail_path

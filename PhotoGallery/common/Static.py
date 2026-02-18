@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from django.conf import settings
 
 LANGUAGE = 'zh'
 
@@ -30,85 +31,49 @@ DEVICES_DICT = {
 EXTS_THUMBNAIL = '.jpg'
 EXTS_PIC = ('.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.raw', '.cr2', '.nef', '.arw', '.heic')
 
-_initialized = False
-_PATH_SORTED_RAW_DIGITAL_PHOTOS = None
-_PATH_SORTED_RAW_FILMS = None
-_PATH_SORTED_SHOW_PHOTOS = None
-_PATH_SORTED_THUMBNAIL_PHOTOS = None
-_PATH_UPLOADED_DIGITAL_PHOTOS = None
-_PATH_UPLOADED_THUMBNAIL = None
-_PATH_UPLOADED_FILMS = None
+
+def PATH_SORTED_RAW_DIGITAL_PHOTOS():
+    return os.path.join(settings.MEDIA_ROOT, 'photos', 'raw_digital') + '/'
 
 
-def _init_paths():
-    global _initialized
-    global _PATH_SORTED_RAW_DIGITAL_PHOTOS
-    global _PATH_SORTED_SHOW_PHOTOS
-    global _PATH_SORTED_THUMBNAIL_PHOTOS
-    global _PATH_SORTED_RAW_FILMS
-    global _PATH_UPLOADED_DIGITAL_PHOTOS
-    global _PATH_UPLOADED_THUMBNAIL
-    global _PATH_UPLOADED_FILMS
-    
-    if _initialized:
-        return
-    
-    from django.conf import settings
-    _PATH_SORTED_RAW_DIGITAL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'raw_digital') + '/'
-    _PATH_SORTED_SHOW_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'show') + '/'
-    _PATH_SORTED_THUMBNAIL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'photos', 'thumbnail') + '/'
-    _PATH_SORTED_RAW_FILMS = os.path.join(settings.MEDIA_ROOT, 'photos', 'raw_films') + '/'
-    _PATH_UPLOADED_DIGITAL_PHOTOS = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'digital_photos') + '/'
-    _PATH_UPLOADED_THUMBNAIL = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'thumbnail') + '/'
-    _PATH_UPLOADED_FILMS = os.path.join(settings.MEDIA_ROOT, 'uploaded', 'films') + '/'
-    
-    _initialized = True
+def PATH_SORTED_RAW_FILMS():
+    return os.path.join(settings.MEDIA_ROOT, 'photos', 'raw_films') + '/'
 
 
-class _ModuleProxy:
-    def __getattr__(self, name):
-        if name == 'PATH_SORTED_RAW_DIGITAL_PHOTOS':
-            _init_paths()
-            return _PATH_SORTED_RAW_DIGITAL_PHOTOS
-        elif name == 'PATH_SORTED_SHOW_PHOTOS':
-            _init_paths()
-            return _PATH_SORTED_SHOW_PHOTOS
-        elif name == 'PATH_SORTED_THUMBNAIL_PHOTOS':
-            _init_paths()
-            return _PATH_SORTED_THUMBNAIL_PHOTOS
-        elif name == 'PATH_SORTED_RAW_FILMS':
-            _init_paths()
-            return _PATH_SORTED_RAW_FILMS
-        elif name == 'PATH_UPLOADED_DIGITAL_PHOTOS':
-            _init_paths()
-            return _PATH_UPLOADED_DIGITAL_PHOTOS
-        elif name == 'PATH_UPLOADED_THUMBNAIL':
-            _init_paths()
-            return _PATH_UPLOADED_THUMBNAIL
-        elif name == 'PATH_UPLOADED_FILMS':
-            _init_paths()
-            return _PATH_UPLOADED_FILMS
-        else:
-            return globals()[name]
+def PATH_SORTED_SHOW_PHOTOS():
+    return os.path.join(settings.MEDIA_ROOT, 'photos', 'show') + '/'
+
+
+def PATH_SORTED_THUMBNAIL_PHOTOS():
+    return os.path.join(settings.MEDIA_ROOT, 'photos', 'thumbnail') + '/'
+
+
+def PATH_UPLOADED_DIGITAL_PHOTOS():
+    return os.path.join(settings.MEDIA_ROOT, 'uploaded', 'digital_photos') + '/'
+
+
+def PATH_UPLOADED_THUMBNAIL():
+    return os.path.join(settings.MEDIA_ROOT, 'uploaded', 'thumbnail') + '/'
+
+
+def PATH_UPLOADED_FILMS():
+    return os.path.join(settings.MEDIA_ROOT, 'uploaded', 'films') + '/'
 
 
 def ensure_path_directories_exist():
     """
     自动创建所有以 PATH_ 开头的路径目录
     """
-    _init_paths()
-    path_attrs = [
-        'PATH_SORTED_RAW_DIGITAL_PHOTOS',
-        'PATH_SORTED_SHOW_PHOTOS',
-        'PATH_SORTED_THUMBNAIL_PHOTOS',
-        'PATH_SORTED_RAW_FILMS',
-        'PATH_UPLOADED_DIGITAL_PHOTOS',
-        'PATH_UPLOADED_THUMBNAIL',
-        'PATH_UPLOADED_FILMS',
-    ]
-    for attr_name in path_attrs:
+    import inspect
+    current_module = sys.modules[__name__]
+    path_funcs = []
+    for name, obj in inspect.getmembers(current_module):
+        if name.startswith('PATH_') and inspect.isfunction(obj):
+            path_funcs.append(obj)
+    
+    for func in path_funcs:
         try:
-            full_path = getattr(_proxy, attr_name)
+            full_path = func()
             if isinstance(full_path, str) and full_path.strip():
                 if not os.path.exists(full_path):
                     os.makedirs(full_path, exist_ok=True)
@@ -116,8 +81,4 @@ def ensure_path_directories_exist():
                 else:
                     logging.info(f"Directory already exists: {full_path}")
         except Exception as e:
-            logging.warning(f"Failed to ensure directory for {attr_name}: {e}")
-
-
-_proxy = _ModuleProxy()
-sys.modules[__name__] = _proxy
+            logging.warning(f"Failed to ensure directory: {e}")
