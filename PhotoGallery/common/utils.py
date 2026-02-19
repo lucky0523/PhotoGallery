@@ -32,6 +32,27 @@ def is_number(s):
         return False
 
 
+def path_to_url(path):
+    """把文件系统路径转换为 /media/ URL，供模板使用"""
+    if not path:
+        return path
+    from django.conf import settings
+    # 统一成 POSIX 风格
+    path = path.replace('\\', '/')
+    media_root = settings.MEDIA_ROOT.replace('\\', '/').rstrip('/')
+    # 如果是绝对路径，尝试剥离 MEDIA_ROOT 前缀
+    if path.startswith(media_root):
+        rel = path[len(media_root):].lstrip('/')
+        return settings.MEDIA_URL + rel
+    # 如果是相对路径（如 app/data/dynamic/...），找 data/dynamic 之后的部分
+    marker = settings.MEDIA_RELATIVE_PATH
+    idx = path.find(marker)
+    if idx != -1:
+        return settings.MEDIA_URL + path[idx + len(marker) + 1:]
+    # 兜底：原样返回
+    return path
+
+
 def photo_to_dict(photo):
     if photo.show_path is None or photo.show_path == '':
         # 上传页面生成预览图片的信息时走这里
@@ -40,20 +61,20 @@ def photo_to_dict(photo):
                      'is_film': photo.is_film,
                      'formatted_name': photo.formatted_name,
                      'time': photo.shooting_time,
-                     'thumbnail': photo.thumbnail_path}
+                     'thumbnail': path_to_url(photo.thumbnail_path)}
         view_dict['device'] = get_device_name(photo)
     elif photo.is_film:
         view_dict = {'id': photo.id,
                      'order': photo.order_id,
-                     'image': photo.show_path,
-                     'thumbnail': photo.thumbnail_path,
+                     'image': path_to_url(photo.show_path),
+                     'thumbnail': path_to_url(photo.thumbnail_path),
                      'is_film': photo.is_film,
                      'file_model': photo.film_model}
     else:
         view_dict = {'id': photo.id,
                      'order': photo.order_id,
-                     'image': photo.show_path,
-                     'thumbnail': photo.thumbnail_path,
+                     'image': path_to_url(photo.show_path),
+                     'thumbnail': path_to_url(photo.thumbnail_path),
                      'formatted_name': photo.formatted_name,
                      'is_film': photo.is_film,
                      'iso': photo.iso,
@@ -138,6 +159,7 @@ def open_and_rotate(src_file):
 
 
 def make_square_thumbnail(src_file, side, dstpath, dstname):
+    logger.info("Make square thumbnail,dstpath %s, dstname %s" % (dstpath, dstname))
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
@@ -145,7 +167,6 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
     #缩略图后缀统一改成jpg
     base_name, ext = os.path.splitext(dstname)
     dstname = base_name + Static.EXTS_THUMBNAIL
-    logger.info("Make square thumbnail,dstpath %s, dstname %s" % (dstpath, dstname))
 
     img = open_and_rotate(src_file)
     width, height = img.size
@@ -327,20 +348,6 @@ def is_photo_file(file_name):
         name = os.path.basename(file_name)
     return os.path.isfile(file_name) and name.lower().endswith(Static.EXTS_PIC)
 
-
-def has_file_with_same_name(directory, base_name):
-    """
-    检查目录中是否存在与 base_name 同名的文件（不考虑扩展名和大小写）
-    """
-    if not os.path.exists(directory):
-        return False
-    for filename in os.listdir(directory):
-        file_base, _ = os.path.splitext(filename)
-        if file_base.lower() == base_name.lower():
-            return True
-    return False
-
-
 def clean_uploaded_temp():
     """
     清理 PATH_UPLOADED_THUMBNAIL 文件夹中多余的缩略图文件。
@@ -353,11 +360,14 @@ def clean_uploaded_temp():
     for thumb in os.scandir(Static.PATH_UPLOADED_THUMBNAIL()):
         if thumb.is_file() and thumb.name.lower().endswith(Static.EXTS_THUMBNAIL):
             base_name = os.path.splitext(thumb.name)[0]
-            # 检查两个目录中是否有同名文件（不考虑扩展名）
-            source_found = (
-                has_file_with_same_name(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), base_name) or
-                has_file_with_same_name(Static.PATH_UPLOADED_FILMS(), base_name)
-            )
+            # 构造可能的源文件名（支持常见原图扩展名）
+            source_found = False
+            for ext in Static.EXTS_PIC:
+                source_file = base_name + ext
+                if (os.path.isfile(os.path.join(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), source_file)) or
+                        os.path.isfile(os.path.join(Static.PATH_UPLOADED_FILMS(), source_file))):
+                    source_found = True
+                    break
             if not source_found:
                 try:
                     os.remove(thumb.path)

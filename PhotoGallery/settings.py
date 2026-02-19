@@ -128,7 +128,8 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'data', 'dynamic')
+MEDIA_RELATIVE_PATH = os.path.join('data','dynamic')
+MEDIA_ROOT = os.path.join(BASE_DIR,  MEDIA_RELATIVE_PATH)
 
 SHOW_IMAGE_ROOT = os.path.join(MEDIA_ROOT, "photos", "show")
 THUMBNAIL_IMAGE_ROOT = os.path.join(MEDIA_ROOT, "photos", "thumbnail")

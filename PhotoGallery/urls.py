@@ -15,7 +15,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path
-from django.views.static import serve
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -37,10 +36,6 @@ urlpatterns = [
 
 
     path('tencent9176013635572033544.txt/', views.wx_verify),
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    re_path('dynamic/photos/show/(?P<path>.*)', serve, {'document_root': settings.SHOW_IMAGE_ROOT}),
-    re_path('dynamic/photos/thumbnail/(?P<path>.*)', serve, {'document_root': settings.THUMBNAIL_IMAGE_ROOT}),
-    re_path('dynamic/uploaded/(?P<path>.*)', serve, {'document_root': settings.UPLOADED_IMAGE_ROOT}),
 
     path('posi_picker', views.position_picker),
 
