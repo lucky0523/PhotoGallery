@@ -138,7 +138,6 @@ def open_and_rotate(src_file):
 
 
 def make_square_thumbnail(src_file, side, dstpath, dstname):
-    logger.info("Make square thumbnail,dstpath %s, dstname %s" % (dstpath, dstname))
     if not dstpath.endswith('/'):
         dstpath = dstpath + '/'
     if not os.path.exists(dstpath):
@@ -146,6 +145,7 @@ def make_square_thumbnail(src_file, side, dstpath, dstname):
     #缩略图后缀统一改成jpg
     base_name, ext = os.path.splitext(dstname)
     dstname = base_name + Static.EXTS_THUMBNAIL
+    logger.info("Make square thumbnail,dstpath %s, dstname %s" % (dstpath, dstname))
 
     img = open_and_rotate(src_file)
     width, height = img.size
@@ -327,6 +327,20 @@ def is_photo_file(file_name):
         name = os.path.basename(file_name)
     return os.path.isfile(file_name) and name.lower().endswith(Static.EXTS_PIC)
 
+
+def has_file_with_same_name(directory, base_name):
+    """
+    检查目录中是否存在与 base_name 同名的文件（不考虑扩展名和大小写）
+    """
+    if not os.path.exists(directory):
+        return False
+    for filename in os.listdir(directory):
+        file_base, _ = os.path.splitext(filename)
+        if file_base.lower() == base_name.lower():
+            return True
+    return False
+
+
 def clean_uploaded_temp():
     """
     清理 PATH_UPLOADED_THUMBNAIL 文件夹中多余的缩略图文件。
@@ -339,14 +353,11 @@ def clean_uploaded_temp():
     for thumb in os.scandir(Static.PATH_UPLOADED_THUMBNAIL()):
         if thumb.is_file() and thumb.name.lower().endswith(Static.EXTS_THUMBNAIL):
             base_name = os.path.splitext(thumb.name)[0]
-            # 构造可能的源文件名（支持常见原图扩展名）
-            source_found = False
-            for ext in Static.EXTS_PIC:
-                source_file = base_name + ext
-                if (os.path.isfile(os.path.join(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), source_file)) or
-                        os.path.isfile(os.path.join(Static.PATH_UPLOADED_FILMS(), source_file))):
-                    source_found = True
-                    break
+            # 检查两个目录中是否有同名文件（不考虑扩展名）
+            source_found = (
+                has_file_with_same_name(Static.PATH_UPLOADED_DIGITAL_PHOTOS(), base_name) or
+                has_file_with_same_name(Static.PATH_UPLOADED_FILMS(), base_name)
+            )
             if not source_found:
                 try:
                     os.remove(thumb.path)

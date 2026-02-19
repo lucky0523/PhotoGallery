@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-klr2ni($s918sb@69*ht9b076%pbec^1hc+38ok1xx#=!lt9x='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('PRODUCTION', 'false').lower() == 'false'
 
 ALLOWED_HOSTS = ['huoyi.dynv6.net', 'www.huoyi.dynv6.net', 'localhost', '127.0.0.1']  # 加 www 如果你也想支持
 
