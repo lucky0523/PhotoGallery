@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import random
+from datetime import datetime
 from functools import wraps
 from urllib.parse import urlparse
 
@@ -167,7 +168,7 @@ def uploader(request):
             is_film = request.POST.get('is_film', -1) == "True"
             file_mtime = request.POST.get('file_mtime', None)
             if 'file' in request.FILES:
-                uploaded_file = request.FILES['file']
+                uploaded_files = request.FILES.getlist('file')
                 save_path = Static.PATH_UPLOADED_DIGITAL_PHOTOS()
                 if is_film:
                     logger.info("Upload film photo")
@@ -175,27 +176,31 @@ def uploader(request):
                 if not os.path.exists(save_path):
                     os.makedirs(save_path, exist_ok=True)
                 
-                safe_filename = os.path.basename(uploaded_file.name)
-                filepath = os.path.join(save_path, safe_filename)
-                
-                with open(filepath, 'wb+') as destination:
-                    for chunk in uploaded_file.chunks():
-                        destination.write(chunk)
+                uploaded_count = 0
+                for uploaded_file in uploaded_files:
+                    safe_filename = os.path.basename(uploaded_file.name)
+                    filepath = os.path.join(save_path, safe_filename)
+                    
+                    with open(filepath, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
 
-                # 恢复文件的最后修改时间
-                if file_mtime:
-                    try:
-                        mtime = int(file_mtime) / 1000.0
-                        os.utime(filepath, (mtime, mtime))
-                        logger.info(f"Restored file mtime: {filepath} -> {file_mtime}")
-                    except Exception as e:
-                        logger.error(f"Failed to set file mtime: {e}")
+                    # 恢复文件的最后修改时间
+                    if file_mtime:
+                        try:
+                            mtime = int(file_mtime) / 1000.0
+                            os.utime(filepath, (mtime, mtime))
+                            readable_date = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+                            logger.info(f"Restored file mtime: {filepath} -> {readable_date}")
+                        except Exception as e:
+                            logger.error(f"Restored file mtime failed: {e}")
 
-                # 获取保存后的文件URL
-                file_url = os.path.join('/media', os.path.relpath(filepath, settings.MEDIA_ROOT))
-                logger.info("File saved, url:", file_url)
+                    # 获取保存后的文件URL
+                    file_url = os.path.join('/media', os.path.relpath(filepath, settings.MEDIA_ROOT))
+                    logger.info("File saved, url:", file_url)
+                    uploaded_count += 1
 
-                msg = "上传成功!"
+                msg = f"成功上传 {uploaded_count} 个文件!"
             else:
                 msg = "未选择文件！"
         elif action == 'add_to_album':

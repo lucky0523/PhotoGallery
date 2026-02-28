@@ -11,7 +11,7 @@
 <div id="msg_block" style="background-color: #fff3cd; padding: 12px 16px; border-radius: 4px; border: 1px solid #ffc107; color: #856404; margin-bottom: 16px;">{{ msg }}</div>
 {% endif %}
 <form action="/uploader" method="post" enctype="multipart/form-data" id="upload_form">
-    <p><input type="file" name="file" accept="image/*" id="file_input"></p>
+    <p><input type="file" name="file" accept="image/*" id="file_input" multiple></p>
     <input type="hidden" name="file_mtime" id="file_mtime">
     <label><input type="radio" name="is_film" value="False" checked>数码
         <input type="radio" name="is_film" value="True">胶片</label>
