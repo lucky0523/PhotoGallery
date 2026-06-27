@@ -1,61 +1,648 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>上传图片</title>
+    <link href="/static/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 24px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 24px;
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .page-header p {
+            margin: 8px 0 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 48px 32px;
+            text-align: center;
+            transition: all 0.2s;
+            background: #f8f9fa;
+        }
+        
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #3b82f6;
+            background: #dbeafe;
+        }
+        
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            color: #6c757d;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .upload-hint {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-top: 16px;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        /* Photo Type Selection */
+        .photo-type-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .photo-type-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .radio-label:hover {
+            border-color: #3b82f6;
+        }
+        
+        .radio-label input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #3b82f6;
+        }
+        
+        .radio-label input[type="radio"]:checked + span {
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .radio-label:has(input[type="radio"]:checked) {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .radio-label span {
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        /* Selected Files */
+        .selected-files {
+            margin-top: 24px;
+            display: none;
+        }
+        
+        .selected-files.show {
+            display: block;
+        }
+        
+        .selected-files-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+        
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .file-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #374151;
+        }
+        
+        .file-tag .remove {
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .file-tag .remove:hover {
+            color: #ef4444;
+        }
+        
+        /* Action Buttons */
+        .action-section {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        /* Buffer Section */
+        .buffer-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .buffer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .buffer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .buffer-count {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .buffer-count span {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .photo-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .photo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        
+        .photo-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .photo-info {
+            padding: 16px;
+        }
+        
+        .photo-meta {
+            margin-bottom: 12px;
+        }
+        
+        .photo-meta p {
+            margin: 4px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .photo-meta .device {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .photo-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        
+        .photo-type-badge.film {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .photo-type-badge.digital {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .photo-filename {
+            font-size: 12px;
+            color: #9ca3af;
+            word-break: break-all;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f3f4f6;
+            border-radius: 6px;
+        }
+        
+        .photo-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .photo-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            justify-content: center;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: #6c757d;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+    </style>
 </head>
 <body>
 {% include 'backend_header.html' %}
 
-{% if msg %}
-<div id="msg_block" style="background-color: #fff3cd; padding: 12px 16px; border-radius: 4px; border: 1px solid #ffc107; color: #856404; margin-bottom: 16px;">{{ msg }}</div>
-{% endif %}
-<form action="/uploader" method="post" enctype="multipart/form-data" id="upload_form">
-    <p><input type="file" name="file" accept="image/*" id="file_input" multiple></p>
-    <input type="hidden" name="file_mtime" id="file_mtime">
-    <label><input type="radio" name="is_film" value="False" checked>数码
-        <input type="radio" name="is_film" value="True">胶片</label>
-    <button type="submit" name="action" value="upload_to_buffer">上传至缓冲区</button>
-</form>
-<script>
-    document.getElementById('file_input').addEventListener('change', function(e) {
-        if (e.target.files.length > 0) {
-            var file = e.target.files[0];
-            document.getElementById('file_mtime').value = file.lastModified;
-        }
-    });
-</script>
-<br>
-<form action="/uploader" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="amount" value="all">
-    <button type="submit" name="action" value="add_to_album">全部添加至相册</button>
-</form>
-<br>
-{% for item in photos %}
-    <div style="display: flex; align-items: center;">
-        <img src="{{ item.thumbnail }}" style="width:300px; height:auto;">
-        <div>
-            <p style="margin-left: 10px;">{{ item.device }}</p>
-            <p style="margin-left: 10px;">{{ item.time }}</p>
-            <p style="margin-left: 10px;">{{ item.formatted_name }}</p>
-            {% if item.is_film %}
-                <p style="margin-left: 10px;">胶片</p>
+<div class="page-header">
+    <h1>上传图片</h1>
+    <p>上传照片到缓冲区，然后添加到相册</p>
+</div>
+
+<div class="container">
+    {% if msg %}
+    <div class="alert {% if '成功' in msg or '已添加' in msg %}alert-success{% elif '删除' in msg %}alert-warning{% else %}alert-error{% endif %}">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            {% if '成功' in msg or '已添加' in msg %}
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            {% elif '删除' in msg %}
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
             {% else %}
-                <p style="margin-left: 10px;">数码</p>
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
             {% endif %}
-            <form style="margin-left: 10px;" action="/uploader" method="post">
-                <label>
-                    <input type="hidden" name="amount" value="one">
-                    <input type="hidden" name="is_film" value="{{ item.is_film }}">
-                    <input onfocus=this.blur() type="text" name="path" size="50" value="{{ item.image }}">
-                </label>
-                <button type="submit" name="action" value="add_to_album">添加一张至相册</button>
-                <br>
-                <button type="submit" name="action" value="remove_from_buffer">在缓冲区中删除</button>
+        </svg>
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+        <form action="/uploader" method="post" enctype="multipart/form-data" id="upload_form">
+            <div class="upload-area" id="upload_area">
+                <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="upload-text">拖拽文件到此处，或点击选择文件</p>
+                <p class="upload-hint">支持 JPG、PNG、RAW 等图片格式，可多选</p>
+                <div class="file-input-wrapper">
+                    <button type="button" class="btn btn-primary">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                        </svg>
+                        选择文件
+                    </button>
+                    <input type="file" name="file" accept="image/*" id="file_input" multiple>
+                </div>
+                <input type="hidden" name="file_mtime" id="file_mtime">
+            </div>
+            
+            <div class="selected-files" id="selected_files">
+                <div class="selected-files-title">已选择文件：</div>
+                <div class="file-list" id="file_list"></div>
+            </div>
+            
+            <div class="photo-type-section">
+                <div class="photo-type-title">照片类型</div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="is_film" value="False" checked>
+                        <span>数码照片</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="is_film" value="True">
+                        <span>胶片扫描</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <button type="submit" name="action" value="upload_to_buffer" class="btn btn-primary" id="upload_btn" disabled>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                    </svg>
+                    上传至缓冲区
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Buffer Section -->
+    <div class="buffer-section">
+        <div class="buffer-header">
+            <h2 class="buffer-title">缓冲区</h2>
+            <form action="/uploader" method="post" enctype="multipart/form-data" style="display: flex; gap: 12px; align-items: center;">
+                <span class="buffer-count">共 <span>{{ photos|length }}</span> 张照片</span>
+                <input type="hidden" name="amount" value="all">
+                <button type="submit" name="action" value="add_to_album" class="btn btn-success" {% if not photos %}disabled{% endif %}>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    全部添加至相册
+                </button>
             </form>
         </div>
+        
+        {% if photos %}
+        <div class="photo-grid">
+            {% for item in photos %}
+            <div class="photo-card">
+                <img src="{{ item.thumbnail }}" class="photo-image" alt="{{ item.formatted_name }}">
+                <div class="photo-info">
+                    {% if item.is_film %}
+                        <span class="photo-type-badge film">胶片</span>
+                    {% else %}
+                        <span class="photo-type-badge digital">数码</span>
+                    {% endif %}
+                    
+                    <div class="photo-meta">
+                        <p class="device">{{ item.device }}</p>
+                        <p>{{ item.time }}</p>
+                    </div>
+                    
+                    <p class="photo-filename">{{ item.formatted_name }}</p>
+                    
+                    <form action="/uploader" method="post">
+                        <input type="hidden" name="amount" value="one">
+                        <input type="hidden" name="is_film" value="{{ item.is_film }}">
+                        <input type="hidden" name="path" value="{{ item.image }}">
+                        
+                        <div class="photo-actions">
+                            <button type="submit" name="action" value="add_to_album" class="btn btn-success">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                </svg>
+                                添加
+                            </button>
+                            <button type="submit" name="action" value="remove_from_buffer" class="btn btn-danger">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                                删除
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h3>缓冲区为空</h3>
+            <p>上传的照片将显示在这里</p>
+        </div>
+        {% endif %}
     </div>
-    <br>
-{% endfor %}
+</div>
+
+<script>
+    const uploadArea = document.getElementById('upload_area');
+    const fileInput = document.getElementById('file_input');
+    const fileMtime = document.getElementById('file_mtime');
+    const selectedFiles = document.getElementById('selected_files');
+    const fileList = document.getElementById('file_list');
+    const uploadBtn = document.getElementById('upload_btn');
+    
+    let files = [];
+    
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        files = Array.from(e.dataTransfer.files);
+        updateFileList();
+    });
+    
+    // 文件选择
+    fileInput.addEventListener('change', (e) => {
+        files = Array.from(e.target.files);
+        updateFileList();
+    });
+    
+    function updateFileList() {
+        fileList.innerHTML = '';
+        
+        if (files.length > 0) {
+            selectedFiles.classList.add('show');
+            uploadBtn.disabled = false;
+            
+            // 记录第一个文件的修改时间
+            fileMtime.value = files[0].lastModified;
+            
+            files.forEach((file, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'file-tag';
+                tag.innerHTML = `
+                    ${file.name}
+                    <span class="remove" onclick="removeFile(${index})">×</span>
+                `;
+                fileList.appendChild(tag);
+            });
+        } else {
+            selectedFiles.classList.remove('show');
+            uploadBtn.disabled = true;
+            fileMtime.value = '';
+        }
+    }
+    
+    function removeFile(index) {
+        files.splice(index, 1);
+        
+        // 更新 input 的 files
+        const dt = new DataTransfer();
+        files.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+        
+        updateFileList();
+    }
+</script>
 </body>
 </html>

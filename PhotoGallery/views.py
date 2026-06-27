@@ -250,16 +250,28 @@ def uploader(request):
 @require_internal_request
 def action(request):
     logger.info('Action request: %s', request.GET)
-    msg = ''
     id_str = request.GET.get('id', -1)
     action = request.GET.get('act', -1)
     logger.info('Modifying: action=%s, id=%s', action, id_str)
-    idd = int(id_str)
+    
+    result = {'success': False, 'message': '', 'code': 400}
+    
+    try:
+        idd = int(id_str)
+    except (ValueError, TypeError):
+        result['message'] = '无效的照片ID'
+        return HttpResponse(json.dumps(result, ensure_ascii=False), content_type='application/json')
+    
     if action == 'del':
         p = PhotoInfo.objects.all().filter(id=idd).first()
         if p is not None:
             utils.delete_photo(p)
-            msg = '已删除' + id_str
+            result['success'] = True
+            result['message'] = '已删除照片 #' + id_str
+            result['code'] = 200
+        else:
+            result['message'] = '照片不存在'
+            result['code'] = 404
     elif action == 'modify':
         longitude = request.GET.get('longitude', -1)
         latitude = request.GET.get('latitude', -1)
@@ -270,23 +282,40 @@ def action(request):
                     if utils.is_number(longitude):
                         p.set_position(longitude, latitude)
                         logger.info('Modify position, longitude=%s, latitude=%s' % (longitude, latitude))
+                        result['success'] = True
+                        result['message'] = '修改成功 #' + id_str
+                        result['code'] = 200
+                        result['data'] = {
+                            'longitude': longitude,
+                            'latitude': latitude
+                        }
                     else:
+                        result['message'] = '经度格式错误'
                         logger.error('longitude is not number!!')
                 else:
+                    result['message'] = '纬度格式错误'
                     logger.error('Latitude is not number!!')
             else:
+                result['message'] = '经纬度不能为空'
                 logger.error('Latitude or longitude is None!!')
+        else:
+            result['message'] = '照片不存在'
+            result['code'] = 404
     elif action == 'reset':
         p = PhotoInfo.objects.all().filter(id=idd).first()
         if p is not None:
             utils.reset_photo(p)
-            msg = '已重置' + id_str
-    html = ("<html><body>%s<br><br>"
-            "<a href=\"/\">返回首页</a><br>"
-            "<a href=\"/editor\">编辑图片</a><br>"
-            "<a href=\"/uploader\">继续上传</a>"
-            "</body></html>") % msg
-    return HttpResponse(html)
+            result['success'] = True
+            result['message'] = '已重置照片 #' + id_str
+            result['code'] = 200
+        else:
+            result['message'] = '照片不存在'
+            result['code'] = 404
+    else:
+        result['message'] = '未知操作类型'
+        result['code'] = 400
+    
+    return HttpResponse(json.dumps(result, ensure_ascii=False), content_type='application/json')
 
 # interface
 def wx_verify(request):

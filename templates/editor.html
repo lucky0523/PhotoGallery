@@ -1,123 +1,591 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>相册编辑</title>
+    <link href="/static/css/tabler.min.css" rel="stylesheet"/>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 24px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .photo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .photo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        
+        .photo-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .photo-image:hover {
+            opacity: 0.9;
+        }
+        
+        .photo-info {
+            padding: 16px;
+        }
+        
+        .photo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .photo-id {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .photo-type {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .photo-type.film {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .photo-type.digital {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .photo-details {
+            margin-bottom: 16px;
+        }
+        
+        .photo-details p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .photo-filename {
+            font-size: 12px;
+            color: #6c757d;
+            word-break: break-all;
+            margin-bottom: 12px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .coord-form {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .coord-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+        
+        .input-group input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
-            z-index: 1;
+            z-index: 1050;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
         }
-
+        
         .modal-content {
-            background-color: #fefefe;
-            height: 80%;
-            width: 80%;
-            margin-top: 50px;
-            margin-left: 200px;
-            padding: 20px;
-            border: 1px solid #888;
-        }
-
-        .image_overlay {
-            position: absolute;
-            width: 100%;
-            bottom: 200px;
-            left: 20px;
-        }
-
-        #container {
+            background-color: white;
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            margin: 5vh auto;
+            border-radius: 12px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .modal-body {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+        
+        #map_container {
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .preview-panel {
+            width: 320px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-left: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .preview-image {
             width: 100%;
-            height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .coord-display {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .coord-display h4 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .coord-value {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .coord-value:last-child {
+            border-bottom: none;
+        }
+        
+        .coord-label {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .coord-number {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #212529;
+            font-weight: 500;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 0;
+        }
+        
+        .page-header h1 {
             margin: 0;
-            font-family: "微软雅黑";
+            font-size: 24px;
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .page-header p {
+            margin: 8px 0 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: #6c757d;
+        }
+        
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* Toast Notification */
+        body #toast_container {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            pointer-events: none !important;
+        }
+
+        body #toast_container .toast {
+            padding: 16px 24px !important;
+            border-radius: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            animation: slideIn 0.3s ease-out !important;
+            max-width: 400px !important;
+            pointer-events: auto !important;
+            min-height: 50px !important;
+        }
+
+        body #toast_container .toast-success {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: white !important;
+        }
+
+        body #toast_container .toast-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            color: white !important;
+        }
+
+        body #toast_container .toast-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            color: white !important;
+        }
+
+        body #toast_container .toast svg {
+            flex-shrink: 0 !important;
+            display: block !important;
+        }
+
+        body #toast_container .toast-message {
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            line-height: 1.4 !important;
+            display: block !important;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .toast.hiding {
+            animation: slideOut 0.3s ease-out forwards;
         }
     </style>
 </head>
 <body>
 {% include 'backend_header.html' %}
-{% for item in photos %}
-    <div style="display: flex; align-items: center;">
-        <img src="{{ item.image }}" style="width:300px; height:auto;">
-        <div>
-            <p style="margin-left: 10px;">ID: {{ item.id }} 设备: {{ item.device }}</p>
-            <p style="margin-left: 10px;">{{ item.formatted_name }}</p>
-            {% if item.is_film %}
-                <p style="margin-left: 10px;">胶片</p>
-            {% else %}
-                <p style="margin-left: 10px;">{{ item.time }} {{ item.city }} {{ item.district }}</p>
-            {% endif %}
-            <button style="margin-left: 10px;" onclick="show_modal('{{ item.id }}', '{{ item.image }}')">选取地址</button>
-            <form style="margin-left: 10px;" action="/action" method="get">
-                <label>
-                    <input type="hidden" name="id" value="{{ item.id }}">
-                    <input type="hidden" name="is_film" value="{{ item.is_film }}">
-                    经度longitude:<input id="longitude_{{ item.id }}" name="longitude" value="{{ item.longitude }}"><br>
-                    纬度latitude:<input id="latitude_{{ item.id }}" name="latitude" value="{{ item.latitude }}">
-                </label>
-                <button type="submit" name="act" value="modify">修改</button>
-                <br>
-                <br>
-                <button type="submit" name="act" value="reset">重置</button>
-                <button type="submit" name="act" value="del">删除</button>
+
+<div class="page-header">
+    <h1>相册编辑</h1>
+    <p>管理照片信息、设置地理位置坐标</p>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast_container"></div>
+
+{% if photos %}
+<div class="photo-grid">
+    {% for item in photos %}
+    <div class="photo-card" id="photo_card_{{ item.id }}">
+        <img src="{{ item.image }}" 
+             class="photo-image" 
+             alt="{{ item.formatted_name }}"
+             onclick="show_modal('{{ item.id }}', '{{ item.image }}')">
+        
+        <div class="photo-info">
+            <div class="photo-header">
+                <span class="photo-id">#{{ item.id }}</span>
+                {% if item.is_film %}
+                    <span class="photo-type film">胶片</span>
+                {% else %}
+                    <span class="photo-type digital">数码</span>
+                {% endif %}
+            </div>
+            
+            <div class="photo-details">
+                {% if not item.is_film %}
+                    <p><strong>设备:</strong> {{ item.device }}</p>
+                    <p><strong>时间:</strong> {{ item.time }}</p>
+                    <p><strong>位置:</strong> {{ item.city }} {{ item.district }}</p>
+                {% else %}
+                    <p><strong>类型:</strong> 胶片照片</p>
+                {% endif %}
+            </div>
+            
+            <p class="photo-filename">{{ item.formatted_name }}</p>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="show_modal('{{ item.id }}', '{{ item.image }}')">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                    </svg>
+                    选取地址
+                </button>
+            </div>
+            
+            <form class="coord-form" onsubmit="return handleAction(event, {{ item.id }}, '{{ item.is_film }}')">
+                <input type="hidden" name="id" value="{{ item.id }}">
+                <input type="hidden" name="is_film" value="{{ item.is_film }}">
+                
+                <div class="coord-inputs">
+                    <div class="input-group">
+                        <label>经度 Longitude</label>
+                        <input id="longitude_{{ item.id }}" name="longitude" value="{{ item.longitude }}" placeholder="-1">
+                    </div>
+                    <div class="input-group">
+                        <label>纬度 Latitude</label>
+                        <input id="latitude_{{ item.id }}" name="latitude" value="{{ item.latitude }}" placeholder="-1">
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="submit" name="act" value="modify" class="btn btn-primary">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                        </svg>
+                        修改
+                    </button>
+                    <button type="button" onclick="handleReset({{ item.id }})" class="btn btn-warning">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        重置
+                    </button>
+                    <button type="button" onclick="handleDelete({{ item.id }})" class="btn btn-danger">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg>
+                        删除
+                    </button>
+                </div>
             </form>
         </div>
     </div>
-    <br>
-{% endfor %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>暂无照片</h3>
+    <p>请先上传一些照片</p>
+</div>
+{% endif %}
 
-<!-- 模态窗口 -->
+<!-- 地图模态窗口 -->
 <div id="map_modal" class="modal">
     <div class="modal-content">
-        <div style="display: flex;justify-content: flex-end;">
-            <div>
-                <div style="display: flex;">
-                    <div>经度:</div>
-                    <div id="pick_lng_text"></div>
-                </div>
-                <div style="display: flex;">
-                    <div>纬度:</div>
-                    <div id="pick_lat_text"></div>
-                </div>
-            </div>
-            <button style="margin-left: 40%" onclick='hide_modal()'>确定</button>
+        <div class="modal-header">
+            <span class="modal-title">选择地理位置</span>
+            <button class="btn btn-secondary" onclick="hide_modal()">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+                关闭
+            </button>
         </div>
-        {#        <div id="page_content" style="width: 95%;height: 95%;margin: auto;"></div>#}
-        <div id="map_container" style="width: 95%;height: 95%;margin: auto;"></div>
-        <img class="image_overlay" id="pick_img" src="" style="width:400px; height:auto;">
-        <br>
-        <button id="closeModal" onclick='hide_modal()'>关闭并修改经纬度</button>
+        <div class="modal-body">
+            <div id="map_container"></div>
+            <div class="preview-panel">
+                <img class="preview-image" id="pick_img" src="" alt="预览">
+                <div class="coord-display">
+                    <h4>已选坐标</h4>
+                    <div class="coord-value">
+                        <span class="coord-label">经度</span>
+                        <span class="coord-number" id="pick_lng_text">-</span>
+                    </div>
+                    <div class="coord-value">
+                        <span class="coord-label">纬度</span>
+                        <span class="coord-number" id="pick_lat_text">-</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="hide_modal()" style="width: 100%; justify-content: center;">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                    </svg>
+                    确认选择
+                </button>
+            </div>
+        </div>
     </div>
 </div>
-</body>
-</html>
 
 <script src="/static/js/jquery-3.1.1.min.js"></script>
 <script src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=TSuBY5iecr0Qjq8jvTJrghaLchcEsXMG"></script>
 <script type="text/javascript">
     var modal = document.getElementById("map_modal");
-    var map = new BMapGL.Map('map_container');
-    map.setMapType(BMAP_SATELLITE_MAP);
+    var map;
     var modifying_id = -1;
     var pick_longitude = -1;
     var pick_latitude = -1;
+    
+    // 初始化地图
+    function initMap() {
+        map = new BMapGL.Map('map_container');
+        map.setMapType(BMAP_SATELLITE_MAP);
+        map.centerAndZoom(new BMapGL.Point(116.404, 39.928), 15);
+        map.enableScrollWheelZoom(true);
+        
+        map.addEventListener('click', function (e) {
+            pick_longitude = e.latlng.lng;
+            pick_latitude = e.latlng.lat;
+            $("#pick_lng_text").text(pick_longitude.toFixed(6));
+            $("#pick_lat_text").text(pick_latitude.toFixed(6));
+        });
+    }
+    
+    // 页面加载完成后初始化地图
+    window.onload = initMap;
 
     function show_modal(m_id, img) {
-        //$('#page_content').load('/posi_picker');
-        //alert(m_id)；
         $("#pick_img").attr("src", img);
-        $("#pick_lng_text").text("-1");
-        $("#pick_lat_text").text("-1");
-        modifying_id = m_id
+        $("#pick_lng_text").text("-");
+        $("#pick_lat_text").text("-");
+        modifying_id = m_id;
         modal.style.display = "block";
+        
+        // 重新调整地图大小
+        if (map) {
+            setTimeout(function() {
+                map.resize();
+            }, 100);
+        }
     }
 
     function hide_modal() {
@@ -125,8 +593,8 @@
         var longitude_input = document.getElementById("longitude_" + modifying_id);
         var latitude_input = document.getElementById("latitude_" + modifying_id);
         if (pick_longitude != -1 && pick_latitude != -1) {
-            longitude_input.value = pick_longitude;
-            latitude_input.value = pick_latitude;
+            longitude_input.value = pick_longitude.toFixed(6);
+            latitude_input.value = pick_latitude.toFixed(6);
         }
         pick_longitude = -1;
         pick_latitude = -1;
@@ -136,20 +604,151 @@
         if (event.keyCode == 27) {
             setTimeout(function () {
                 hide_modal();
-            }, 100)
+            }, 100);
         }
     });
+    
+    // 点击模态窗口外部关闭
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            hide_modal();
+        }
+    }
 
-    map.centerAndZoom(new BMapGL.Point(116.404, 39.928), 15);
-    map.enableScrollWheelZoom(true);
-    //map.setMapType(BMAP_SATELLITE_MAP);
-    //map.setMapType(MAP_TYPE_NORMAL);
+    function showMessage(message, type) {
+        var iconPath = '';
+        
+        if (type === 'success') {
+            iconPath = '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>';
+        } else if (type === 'warning') {
+            iconPath = '<path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>';
+        } else {
+            iconPath = '<path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>';
+        }
 
-    map.addEventListener('click', function (e) {
-        console.log(Object.keys(e.latlng))
-        pick_longitude = e.latlng.lng;
-        pick_latitude = e.latlng.lat;
-        $("#pick_lng_text").text(e.latlng.lng);
-        $("#pick_lat_text").text(e.latlng.lat);
-    });
+        var toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.innerHTML = 
+            '<svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">' + iconPath + '</svg>' +
+            '<span class="toast-message">' + message + '</span>';
+
+        var container = document.getElementById('toast_container');
+        if (!container) return;
+        
+        container.appendChild(toast);
+
+        setTimeout(function() {
+            toast.classList.add('hiding');
+            setTimeout(function() {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    function handleAction(event, id, isFilm) {
+        event.preventDefault();
+        
+        var longitude = document.getElementById('longitude_' + id).value;
+        var latitude = document.getElementById('latitude_' + id).value;
+        
+        $.ajax({
+            url: '/action',
+            type: 'GET',
+            data: {
+                id: id,
+                act: 'modify',
+                longitude: longitude,
+                latitude: latitude
+            },
+            success: function(response) {
+                if (response.success) {
+                    showMessage(response.message, 'success');
+                } else {
+                    showMessage(response.message, 'error');
+                }
+            },
+            error: function() {
+                showMessage('请求失败，请稍后重试', 'error');
+            }
+        });
+        
+        return false;
+    }
+
+    function handleReset(id) {
+        if (!confirm('确定要重置这张照片吗？')) {
+            return;
+        }
+        
+        $.ajax({
+            url: '/action',
+            type: 'GET',
+            data: {
+                id: id,
+                act: 'reset'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showMessage(response.message, 'warning');
+                    document.getElementById('longitude_' + id).value = -1;
+                    document.getElementById('latitude_' + id).value = -1;
+                } else {
+                    showMessage(response.message, 'error');
+                }
+            },
+            error: function() {
+                showMessage('请求失败，请稍后重试', 'error');
+            }
+        });
+    }
+
+    function handleDelete(id) {
+        if (!confirm('确定要删除这张照片吗？此操作不可恢复！')) {
+            return;
+        }
+        
+        $.ajax({
+            url: '/action',
+            type: 'GET',
+            data: {
+                id: id,
+                act: 'del'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showMessage(response.message, 'success');
+                    var card = document.getElementById('photo_card_' + id);
+                    if (card) {
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.9)';
+                        card.style.transition = 'all 0.3s';
+                        setTimeout(function() {
+                            card.remove();
+                            checkEmptyState();
+                        }, 300);
+                    }
+                } else {
+                    showMessage(response.message, 'error');
+                }
+            },
+            error: function() {
+                showMessage('请求失败，请稍后重试', 'error');
+            }
+        });
+    }
+
+    function checkEmptyState() {
+        var photoGrid = document.querySelector('.photo-grid');
+        if (photoGrid && photoGrid.children.length === 0) {
+            var emptyHtml = '<div class="empty-state">' +
+                '<h3>暂无照片</h3>' +
+                '<p>请先上传一些照片</p>' +
+                '</div>';
+            photoGrid.outerHTML = emptyHtml;
+        }
+    }
 </script>
+</body>
+</html>
