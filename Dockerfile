@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libheif1 \
     libexpat1 \
     gosu \
+    media-types \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建非 root 用户

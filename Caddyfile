@@ -1,33 +1,22 @@
 {
     email lucky0523@gmail.com
-    # debug  # 生产环境建议注释掉
 }
 
 huoyi.dynv6.net {
-
-    # 静态文件 - Caddy 直接服务，不经过 Django
-    handle_path /static/* {
-		root * /srv/static
-		file_server
-		encode gzip zstd
-	}
-
-    # 媒体文件 - 用户上传的内容
-	handle_path /media/* {
-		root * /srv/media
-		file_server
-		encode gzip zstd
-	}
-
-    # 其余请求反向代理到 Django/uWSGI
-    handle {
-        reverse_proxy web:8000
+    # 媒体文件由 Caddy 直接服务，路径需要手动指定
+    handle_path /media/* {
+        root * /home/ubuntu/docker_files/photo-gallery/data/dynamic
+        file_server
+        encode gzip zstd
     }
 
-    # 响应压缩
+    # 其他所有请求（包括 /static/）都交给 Django
+    handle {
+        reverse_proxy localhost:8000
+    }
+
     encode gzip zstd
 
-    # 安全 Header
     header {
         Strict-Transport-Security "max-age=31536000;"
         X-Content-Type-Options nosniff
@@ -36,9 +25,8 @@ huoyi.dynv6.net {
         -Server
     }
 
-    # 日志
     log {
-        output stderr
+        output file /var/log/caddy/photo-gallery.log
         format console
     }
 }
